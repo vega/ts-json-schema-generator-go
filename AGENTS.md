@@ -107,6 +107,12 @@ Deliberate and documented in commit history:
   properties are compared as a superset because they track the lib.dom
   version.
 
+## Development workflow
+
+Changes go through issues and pull requests: file (or find) an issue, work
+on a branch, open a PR whose description says `Closes #N`, and leave merging
+to a human reviewer. Do not commit to `main` directly.
+
 ## Keeping up with typescript-go
 
 `tools/bump-tsgo.sh <ref>` re-pins the compiler and regenerates shims; the
