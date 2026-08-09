@@ -112,18 +112,20 @@ func (f *CircularReferenceTypeFormatter) GetChildren(t types.Type) []types.Type 
 	children := &[]types.Type{}
 	f.children[t] = children
 	*children = append(*children, f.child.GetChildren(t)...)
-	*children = uniqueTypes(*children)
+	*children = unique(*children)
 	return *children
 }
 
-// uniqueTypes de-duplicates by instance identity (src/Utils/uniqueArray.ts).
-func uniqueTypes(list []types.Type) []types.Type {
-	seen := make(map[types.Type]bool, len(list))
-	out := make([]types.Type, 0, len(list))
-	for _, t := range list {
-		if !seen[t] {
-			seen[t] = true
-			out = append(out, t)
+// unique de-duplicates a slice by value, keeping first occurrences in order
+// (src/Utils/uniqueArray.ts). Types and definitions are compared by instance
+// identity, since they are pointers.
+func unique[T comparable](list []T) []T {
+	seen := make(map[T]bool, len(list))
+	out := make([]T, 0, len(list))
+	for _, v := range list {
+		if !seen[v] {
+			seen[v] = true
+			out = append(out, v)
 		}
 	}
 	return out

@@ -289,16 +289,37 @@ func (p *json5Parser) parseEscape(sb *strings.Builder) error {
 
 func (p *json5Parser) parseHexEscape(sb *strings.Builder, digits int) error {
 	p.pos++ // consume 'x' or 'u'
+	code, err := p.readHexDigits(digits)
+	if err != nil {
+		return err
+	}
+	// A \uXXXX high surrogate followed by a \uXXXX low surrogate is one
+	// character, as in JS. A lone surrogate falls through and, having no
+	// UTF-8 encoding, becomes U+FFFD.
+	if digits == 4 && code >= 0xD800 && code <= 0xDBFF && strings.HasPrefix(p.input[p.pos:], `\u`) {
+		mark := p.pos
+		p.pos += 2
+		low, err := p.readHexDigits(4)
+		if err == nil && low >= 0xDC00 && low <= 0xDFFF {
+			sb.WriteRune(rune(0x10000 + (code-0xD800)<<10 + (low - 0xDC00)))
+			return nil
+		}
+		p.pos = mark
+	}
+	sb.WriteRune(rune(code))
+	return nil
+}
+
+func (p *json5Parser) readHexDigits(digits int) (uint32, error) {
 	if p.pos+digits > len(p.input) {
-		return p.errorf("unterminated hex escape")
+		return 0, p.errorf("unterminated hex escape")
 	}
 	code, err := strconv.ParseUint(p.input[p.pos:p.pos+digits], 16, 32)
 	if err != nil {
-		return p.errorf("invalid hex escape %q", p.input[p.pos:p.pos+digits])
+		return 0, p.errorf("invalid hex escape %q", p.input[p.pos:p.pos+digits])
 	}
 	p.pos += digits
-	sb.WriteRune(rune(code))
-	return nil
+	return uint32(code), nil
 }
 
 func (p *json5Parser) parseNumber() (any, error) {

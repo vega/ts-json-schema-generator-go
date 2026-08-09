@@ -17,6 +17,14 @@ func CreateGenerator(cfg *config.Config) (*generator.SchemaGenerator, func(), er
 		// Return a usable no-op release so callers can defer unconditionally.
 		return nil, func() {}, err
 	}
+	// Wiring panics on a malformed configuration; the checker must still be
+	// released before the panic leaves this frame.
+	defer func() {
+		if r := recover(); r != nil {
+			release()
+			panic(r)
+		}
+	}()
 	nodeParser := CreateParser(program, chk, cfg)
 	typeFormatter := CreateFormatter(cfg)
 	return generator.NewSchemaGenerator(program, chk, nodeParser, typeFormatter, cfg), release, nil

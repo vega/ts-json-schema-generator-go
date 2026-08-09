@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 )
 
@@ -149,18 +150,20 @@ func (d *Definition) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte('{')
 	first := true
+	emitted := map[string]bool{}
 	emit := func(key string, v any) error {
 		if !first {
 			buf.WriteByte(',')
 		}
 		first = false
+		emitted[key] = true
 		kb, err := json.Marshal(key)
 		if err != nil {
 			return err
 		}
 		buf.Write(kb)
 		buf.WriteByte(':')
-		vb, err := json.Marshal(v)
+		vb, err := json.Marshal(jsonSafe(v))
 		if err != nil {
 			return err
 		}
@@ -211,6 +214,11 @@ func (d *Definition) MarshalJSON() ([]byte, error) {
 
 	extraKeys := make([]string, 0, len(d.Extra))
 	for k := range d.Extra {
+		// An annotation must not shadow a keyword the struct already
+		// emitted, or the object would carry a duplicate key.
+		if emitted[k] || (k == "definitions" && d.Definitions != nil) {
+			continue
+		}
 		extraKeys = append(extraKeys, k)
 	}
 	sort.Strings(extraKeys)
@@ -228,6 +236,37 @@ func (d *Definition) MarshalJSON() ([]byte, error) {
 
 	buf.WriteByte('}')
 	return buf.Bytes(), nil
+}
+
+// jsonSafe rewrites the values that JSON.stringify accepts but encoding/json
+// rejects or renders differently: non-finite numbers become null and negative
+// zero becomes zero. It recurses through the generic containers that reach
+// MarshalJSON via Const, Enum and Extra.
+func jsonSafe(v any) any {
+	switch x := v.(type) {
+	case float64:
+		if math.IsInf(x, 0) || math.IsNaN(x) {
+			return nil
+		}
+		if x == 0 {
+			return 0.0
+		}
+		return x
+	case []any:
+		out := make([]any, len(x))
+		for i, e := range x {
+			out[i] = jsonSafe(e)
+		}
+		return out
+	case map[string]any:
+		out := make(map[string]any, len(x))
+		for k, e := range x {
+			out[k] = jsonSafe(e)
+		}
+		return out
+	default:
+		return v
+	}
 }
 
 func constVal(p *any) any {

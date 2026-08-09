@@ -1,6 +1,8 @@
 package formatter
 
 import (
+	"slices"
+
 	"github.com/vega/ts-json-schema-generator-go/internal/schema"
 )
 
@@ -39,7 +41,7 @@ func makeNullable(def *schema.Definition) *schema.Definition {
 	case def.Type != nil && !(typeIsStr && typeStr == "object"):
 		switch t := def.Type.(type) {
 		case []string:
-			if !containsString(t, "null") {
+			if !slices.Contains(t, "null") {
 				def.Type = append(append([]string(nil), t...), "null")
 			}
 		case []any:
@@ -60,7 +62,7 @@ func makeNullable(def *schema.Definition) *schema.Definition {
 		}
 
 		// Enums need null as an option.
-		if def.Enum != nil && !containsValue(def.Enum, nil) {
+		if def.Enum != nil && !slices.Contains(def.Enum, nil) {
 			def.Enum = append(def.Enum, nil)
 		}
 
@@ -97,22 +99,4 @@ func makeNullable(def *schema.Definition) *schema.Definition {
 	}
 
 	return def
-}
-
-func containsString(list []string, s string) bool {
-	for _, v := range list {
-		if v == s {
-			return true
-		}
-	}
-	return false
-}
-
-func containsValue(list []any, v any) bool {
-	for _, e := range list {
-		if e == v {
-			return true
-		}
-	}
-	return false
 }

@@ -31,5 +31,5 @@ func (f *DefinitionTypeFormatter) GetDefinition(t types.Type) *schema.Definition
 func (f *DefinitionTypeFormatter) GetChildren(t types.Type) []types.Type {
 	definitionType := t.(*types.DefinitionType)
 	children := append([]types.Type{definitionType}, f.childTypeFormatter.GetChildren(definitionType.Type)...)
-	return uniqueTypes(children)
+	return unique(children)
 }

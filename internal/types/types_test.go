@@ -1,6 +1,9 @@
 package types
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestNumberToString(t *testing.T) {
 	cases := map[float64]string{
@@ -18,6 +21,10 @@ func TestNumberToString(t *testing.T) {
 			t.Errorf("NumberToString(%v) = %q, want %q", in, got, want)
 		}
 	}
+	// String(-0) is "0", so -0 and 0 share a literal type ID.
+	if got := NumberToString(math.Copysign(0, -1)); got != "0" {
+		t.Errorf("NumberToString(-0) = %q, want 0", got)
+	}
 }
 
 func TestStableStringify(t *testing.T) {
@@ -25,6 +32,11 @@ func TestStableStringify(t *testing.T) {
 	want := `{"a":["x",true,null],"b":1}`
 	if got != want {
 		t.Errorf("StableStringify = %q, want %q", got, want)
+	}
+	// Non-finite numbers stringify as null, like safe-stable-stringify.
+	got = StableStringify([]any{math.Inf(1), math.Inf(-1), math.NaN()})
+	if want := `[null,null,null]`; got != want {
+		t.Errorf("StableStringify(non-finite) = %q, want %q", got, want)
 	}
 }
 
@@ -40,6 +52,16 @@ func TestHash(t *testing.T) {
 	}
 	if got := Hash(42.0); got != "42" {
 		t.Errorf("Hash(42) = %q", got)
+	}
+	// String#length counts UTF-16 code units: 8 CJK characters are 24 bytes
+	// but 8 units, so they pass through.
+	const cjk = "七転八倒四字熟語"
+	if got := Hash(cjk); got != cjk {
+		t.Errorf("Hash(cjk) = %q, want %q", got, cjk)
+	}
+	// This string hashes to exactly -2^31, where Math.abs gives 2147483648.
+	if got := Hash("@aaajaaa5aaa=aaaaaa9"); got != "2147483648" {
+		t.Errorf("Hash(min int32) = %q, want 2147483648", got)
 	}
 }
 

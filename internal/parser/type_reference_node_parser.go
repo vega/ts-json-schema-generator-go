@@ -67,7 +67,7 @@ func (p *TypeReferenceNodeParser) CreateType(node *ast.Node, ctx *Context, _ *ty
 			return &types.AnyType{}
 		}
 
-		return p.childNodeParser.CreateType(declaration, p.createSubContext(node, ctx), nil)
+		return p.childNodeParser.CreateType(declaration, newTypeArgumentContext(p.childNodeParser, node, ctx), nil)
 	}
 
 	if typeSymbol.Flags&ast.SymbolFlagsTypeParameter != 0 {
@@ -90,7 +90,7 @@ func (p *TypeReferenceNodeParser) CreateType(node *ast.Node, ctx *Context, _ *ty
 	}
 
 	if typeSymbol.Name == "Array" || typeSymbol.Name == "ReadonlyArray" {
-		arguments := p.createSubContext(node, ctx).Arguments()
+		arguments := newTypeArgumentContext(p.childNodeParser, node, ctx).Arguments()
 		if len(arguments) == 0 || arguments[0] == nil {
 			return &types.AnyType{}
 		}
@@ -106,13 +106,5 @@ func (p *TypeReferenceNodeParser) CreateType(node *ast.Node, ctx *Context, _ *ty
 		return &types.AnnotatedType{Type: &types.StringType{}, Annotations: types.Annotations{"format": "uri"}, Nullable: false}
 	}
 
-	return p.childNodeParser.CreateType(firstValidDeclaration(typeSymbol.Declarations), p.createSubContext(node, ctx), nil)
-}
-
-func (p *TypeReferenceNodeParser) createSubContext(node *ast.Node, parentContext *Context) *Context {
-	subContext := NewContext(node)
-	for _, typeArg := range node.TypeArguments() {
-		subContext.PushArgument(p.childNodeParser.CreateType(typeArg, parentContext, nil))
-	}
-	return subContext
+	return p.childNodeParser.CreateType(firstValidDeclaration(typeSymbol.Declarations), newTypeArgumentContext(p.childNodeParser, node, ctx), nil)
 }

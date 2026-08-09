@@ -9,6 +9,7 @@ package parser
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -99,18 +100,50 @@ type SubNodeParser interface {
 // ---------------------------------------------------------------------------
 // Node keys (src/Utils/nodeKey.ts)
 
+// baseDir is the prefix stripped from source file names before they enter a
+// node key. The TypeScript implementation replaces process.cwd() in the file
+// name unconditionally; this port strips it only when the name actually starts
+// with it, so an unrelated absolute path keeps its full name. Symlinks are
+// resolved because the file names the compiler reports are resolved too — on
+// macOS, /tmp and /private/tmp would otherwise not match.
 var baseDir = sync.OnceValue(func() string {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return ""
 	}
-	return cwd
+	return resolveSymlinks(cwd)
 })
+
+// resolveSymlinks returns the symlink-free form of path with forward slashes,
+// falling back to the input when the path cannot be resolved.
+func resolveSymlinks(path string) string {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return filepath.ToSlash(path)
+	}
+	return filepath.ToSlash(resolved)
+}
+
+// nodeKeyFileName renders a source file name the way node keys spell it:
+// relative to the working directory, with slashes flattened.
+func nodeKeyFileName(filename string) string {
+	if base := baseDir(); base != "" && strings.HasPrefix(filename, base+"/") {
+		filename = filename[len(base)+1:]
+	}
+	return strings.ReplaceAll(filename, "/", "_")
+}
 
 // GetNodeKey builds a key identifying a node (and its generic arguments)
 // across parses.
 func GetNodeKey(node *ast.Node, ctx *Context) string {
 	var ids []string
+	// A node and its ancestors normally share one source file, but a
+	// synthesized parent can come from another, so the hash is cached per
+	// file rather than computed once.
+	var (
+		hashedSource *ast.SourceFile
+		fileHash     string
+	)
 	for node != nil {
 		source := ast.GetSourceFileOfNode(node)
 		if source == nil {
@@ -121,12 +154,11 @@ func GetNodeKey(node *ast.Node, ctx *Context) string {
 			// for the lifetime of the run.
 			ids = append(ids, fmt.Sprintf("%p", node))
 		} else {
-			filename := source.FileName()
-			if cwd := baseDir(); cwd != "" && strings.HasPrefix(filename, cwd+"/") {
-				filename = filename[len(cwd)+1:]
+			if source != hashedSource {
+				hashedSource = source
+				fileHash = types.Hash(nodeKeyFileName(source.FileName()))
 			}
-			filename = strings.ReplaceAll(filename, "/", "_")
-			ids = append(ids, types.Hash(filename), fmt.Sprintf("%d", node.Pos()), fmt.Sprintf("%d", node.End()))
+			ids = append(ids, fileHash, fmt.Sprintf("%d", node.Pos()), fmt.Sprintf("%d", node.End()))
 		}
 		node = node.Parent
 	}

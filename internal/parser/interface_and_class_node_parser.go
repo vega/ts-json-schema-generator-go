@@ -54,7 +54,7 @@ func (p *InterfaceAndClassNodeParser) CreateType(node *ast.Node, context *Contex
 		return &types.NeverType{}
 	}
 
-	additionalProperties := p.getAdditionalProperties(node, context)
+	additionalProperties := memberAdditionalProperties(p.childNodeParser, node, context, p.additionalProperties)
 
 	// When the type only extends Array or ReadonlyArray then create an array
 	// type instead of an object type.
@@ -149,7 +149,7 @@ func (p *InterfaceAndClassNodeParser) getProperties(node *ast.Node, context *Con
 		}
 
 		property := types.NewObjectProperty(
-			p.getPropertyName(member.Name()),
+			memberPropertyName(p.typeChecker, member.Name()),
 			p.childNodeParser.CreateType(memberType, context, nil),
 			member.QuestionToken() == nil,
 		)
@@ -169,33 +169,12 @@ func (p *InterfaceAndClassNodeParser) getProperties(node *ast.Node, context *Con
 	return properties, false
 }
 
-func (p *InterfaceAndClassNodeParser) getAdditionalProperties(node *ast.Node, context *Context) any {
-	for _, member := range node.Members() {
-		if ast.IsIndexSignatureDeclaration(member) {
-			if t := p.childNodeParser.CreateType(member.Type(), context, nil); t != nil {
-				return t
-			}
-			return p.additionalProperties
-		}
-	}
-	return p.additionalProperties
-}
-
 func (p *InterfaceAndClassNodeParser) getTypeId(node *ast.Node, context *Context) string {
 	nodeType := "class"
 	if ast.IsInterfaceDeclaration(node) {
 		nodeType = "interface"
 	}
 	return nodeType + "-" + GetNodeKey(node, context)
-}
-
-func (p *InterfaceAndClassNodeParser) getPropertyName(propertyName *ast.Node) string {
-	if propertyName.Kind == ast.KindComputedPropertyName {
-		if symbol := tsutils.GetSymbolAtLocation(p.typeChecker, propertyName); symbol != nil {
-			return symbol.Name
-		}
-	}
-	return nodeText(propertyName)
 }
 
 // heritageClausesOf returns the heritage clauses of an interface or class

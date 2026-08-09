@@ -38,6 +38,11 @@ func (p *ChainNodeParser) SupportsNode(node *ast.Node) bool {
 }
 
 func (p *ChainNodeParser) CreateType(node *ast.Node, ctx *Context, reference *types.ReferenceType) types.Type {
+	// Unresolvable type references and import types hand over a nil
+	// declaration; report that instead of dereferencing it.
+	if node == nil {
+		panic(NewUnknownNodeError(nil))
+	}
 	typeCache, ok := p.typeCaches[node]
 	if !ok {
 		typeCache = map[string]types.Type{}

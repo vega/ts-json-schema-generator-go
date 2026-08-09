@@ -171,7 +171,7 @@ func (f *UnionTypeFormatter) GetChildren(t types.Type) []types.Type {
 	for _, item := range t.(*types.UnionType).Types() {
 		children = append(children, f.childTypeFormatter.GetChildren(item)...)
 	}
-	return uniqueTypes(children)
+	return unique(children)
 }
 
 // isOnlyAnyOf reports whether anyOf is the definition's only key

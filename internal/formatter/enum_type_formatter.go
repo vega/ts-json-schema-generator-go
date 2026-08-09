@@ -17,12 +17,12 @@ func (f *EnumTypeFormatter) SupportsType(t types.Type) bool {
 
 func (f *EnumTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
 	enumType := t.(*types.EnumType)
-	values := uniqueValues(enumType.Values)
+	values := unique(enumType.Values)
 	names := make([]string, len(values))
 	for i, v := range values {
 		names[i] = typeName(v)
 	}
-	names = uniqueStrings(names)
+	names = unique(names)
 
 	// NOTE: We want to use "const" when referencing an enum member.
 	// However, this formatter is used both for enum members and enum types,
@@ -35,30 +35,3 @@ func (f *EnumTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
 }
 
 func (f *EnumTypeFormatter) GetChildren(t types.Type) []types.Type { return nil }
-
-// uniqueValues de-duplicates comparable raw values, keeping first
-// occurrences in order (src/Utils/uniqueArray.ts).
-func uniqueValues(list []any) []any {
-	seen := make(map[any]bool, len(list))
-	out := make([]any, 0, len(list))
-	for _, v := range list {
-		if !seen[v] {
-			seen[v] = true
-			out = append(out, v)
-		}
-	}
-	return out
-}
-
-// uniqueStrings de-duplicates strings, keeping first occurrences in order.
-func uniqueStrings(list []string) []string {
-	seen := make(map[string]bool, len(list))
-	out := make([]string, 0, len(list))
-	for _, s := range list {
-		if !seen[s] {
-			seen[s] = true
-			out = append(out, s)
-		}
-	}
-	return out
-}

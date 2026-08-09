@@ -57,5 +57,5 @@ func (f *IntersectionTypeFormatter) GetChildren(t types.Type) []types.Type {
 	for _, member := range t.(*types.IntersectionType).Types() {
 		children = append(children, f.childTypeFormatter.GetChildren(member)...)
 	}
-	return uniqueTypes(children)
+	return unique(children)
 }

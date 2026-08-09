@@ -53,8 +53,8 @@ func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.De
 			addAdditionalProps(definition.AdditionalProperties)
 			addAdditionalProps(other.AdditionalProperties)
 
-			additionalTypes = uniqueStrings(additionalTypes)
-			additionalProps = uniqueDefinitions(additionalProps)
+			additionalTypes = unique(additionalTypes)
+			additionalProps = unique(additionalProps)
 
 			if len(additionalTypes) > 1 {
 				additionalProps = append(additionalProps, &schema.Definition{Type: additionalTypes})
@@ -76,7 +76,7 @@ func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.De
 		}
 
 		if other.Required != nil {
-			required := uniqueStrings(append(append([]string(nil), definition.Required...), other.Required...))
+			required := unique(append(append([]string(nil), definition.Required...), other.Required...))
 			sort.Strings(required)
 			definition.Required = required
 		}
@@ -205,20 +205,6 @@ func castTypeArray(t any) []string {
 		return out
 	}
 	return nil
-}
-
-// uniqueDefinitions de-duplicates definitions by instance identity
-// (src/Utils/uniqueArray.ts).
-func uniqueDefinitions(list []*schema.Definition) []*schema.Definition {
-	seen := make(map[*schema.Definition]bool, len(list))
-	out := make([]*schema.Definition, 0, len(list))
-	for _, d := range list {
-		if !seen[d] {
-			seen[d] = true
-			out = append(out, d)
-		}
-	}
-	return out
 }
 
 // isEmptyDefinition reports whether the definition has no keys set

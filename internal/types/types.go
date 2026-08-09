@@ -6,6 +6,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 )
@@ -598,7 +599,13 @@ func writeStable(sb *strings.Builder, v any) {
 			sb.WriteString("false")
 		}
 	case float64:
-		sb.WriteString(NumberToString(x))
+		// safe-stable-stringify, like JSON.stringify, renders non-finite
+		// numbers as null.
+		if math.IsInf(x, 0) || math.IsNaN(x) {
+			sb.WriteString("null")
+		} else {
+			sb.WriteString(NumberToString(x))
+		}
 	case int:
 		sb.WriteString(NumberToString(float64(x)))
 	case []any:
@@ -671,17 +678,21 @@ func Hash(v any) string {
 	if !ok {
 		str = StableStringify(v)
 	}
-	if len(str) < 20 {
+	units := utf16CodeUnits(str)
+	// The original measures String#length, i.e. UTF-16 code units.
+	if len(units) < 20 {
 		return str
 	}
 	var h int32
-	for _, c := range utf16CodeUnits(str) {
+	for _, c := range units {
 		h = (h << 5) - h + int32(c)
 	}
-	if h < 0 {
-		h = -h
+	// int64 so that negating math.MinInt32 yields 2147483648 like Math.abs.
+	abs := int64(h)
+	if abs < 0 {
+		abs = -abs
 	}
-	return fmt.Sprintf("%d", h)
+	return fmt.Sprintf("%d", abs)
 }
 
 func utf16CodeUnits(s string) []uint16 {

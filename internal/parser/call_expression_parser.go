@@ -50,36 +50,8 @@ func (p *CallExpressionParser) CreateType(node *ast.Node, context *Context, _ *t
 		return &types.SymbolType{}
 	}
 
-	symbol := t.Symbol()
-	if symbol == nil && t.Alias() != nil {
-		symbol = t.Alias().Symbol()
-	}
-
-	// For functions like <T>(type: T) => T, there won't be any reference to
-	// the original type. Using the type checker to synthesize the actual
-	// return type is a better approach than back-referencing generic types
-	// by parameter index.
-	decl := p.typeChecker.TypeToTypeNode(t, node, nodeBuilderFlagsIgnoreErrors, p.synth.Map())
-	if decl == nil && symbol != nil {
-		decl = symbol.ValueDeclaration
-		if decl == nil && len(symbol.Declarations) > 0 {
-			decl = symbol.Declarations[0]
-		}
-	}
-
-	if decl == nil {
-		panic(NewUnknownNodeError(node))
-	}
-
-	return p.childNodeParser.CreateType(decl, p.createSubContext(node, context), nil)
-}
-
-func (p *CallExpressionParser) createSubContext(node *ast.Node, parentContext *Context) *Context {
-	subContext := NewContext(node)
-	for _, arg := range node.Arguments() {
-		subContext.PushArgument(p.childNodeParser.CreateType(arg, parentContext, nil))
-	}
-	return subContext
+	decl := expressionDeclaration(p.typeChecker, t, node, p.synth)
+	return p.childNodeParser.CreateType(decl, newCallArgumentContext(p.childNodeParser, node, context), nil)
 }
 
 // checkerLiteralValue extracts the literal value of a checker type, mirroring

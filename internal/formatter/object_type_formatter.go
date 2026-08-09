@@ -57,7 +57,7 @@ func (f *ObjectTypeFormatter) GetChildren(t types.Type) []types.Type {
 		children = append(children, f.childTypeFormatter.GetChildren(propertyType)...)
 	}
 
-	return uniqueTypes(children)
+	return unique(children)
 }
 
 func (f *ObjectTypeFormatter) getObjectDefinition(objectType *types.ObjectType) *schema.Definition {

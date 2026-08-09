@@ -35,16 +35,8 @@ func (p *ImportTypeNodeParser) CreateType(node *ast.Node, ctx *Context, _ *types
 	// Handle transitive re-exports.
 	if typeSymbol.Flags&ast.SymbolFlagsAlias != 0 {
 		aliasedSymbol := p.typeChecker.GetAliasedSymbol(typeSymbol)
-		return p.childNodeParser.CreateType(aliasedSymbol.Declarations[0], p.createSubContext(node, ctx), nil)
+		return p.childNodeParser.CreateType(aliasedSymbol.Declarations[0], newTypeArgumentContext(p.childNodeParser, node, ctx), nil)
 	}
 
-	return p.childNodeParser.CreateType(typeSymbol.Declarations[0], p.createSubContext(node, ctx), nil)
-}
-
-func (p *ImportTypeNodeParser) createSubContext(node *ast.Node, parentContext *Context) *Context {
-	subContext := NewContext(node)
-	for _, typeArg := range node.TypeArguments() {
-		subContext.PushArgument(p.childNodeParser.CreateType(typeArg, parentContext, nil))
-	}
-	return subContext
+	return p.childNodeParser.CreateType(typeSymbol.Declarations[0], newTypeArgumentContext(p.childNodeParser, node, ctx), nil)
 }

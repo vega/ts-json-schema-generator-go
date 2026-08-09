@@ -138,7 +138,7 @@ func (f *TupleTypeFormatter) GetChildren(t types.Type) []types.Type {
 		}
 		children = append(children, f.childTypeFormatter.GetChildren(member)...)
 	}
-	return uniqueTypes(children)
+	return unique(children)
 }
 
 // getRestAdditionalItems resolves the items of a rest element

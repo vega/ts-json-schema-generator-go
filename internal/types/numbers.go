@@ -19,6 +19,10 @@ func NumberToString(f float64) string {
 	if math.IsNaN(f) {
 		return "NaN"
 	}
+	if f == 0 {
+		// String(-0) is "0" in JS, so -0 and 0 share a literal type ID.
+		return "0"
+	}
 	if f == math.Trunc(f) && math.Abs(f) < 1e21 {
 		return strconv.FormatFloat(f, 'f', -1, 64)
 	}

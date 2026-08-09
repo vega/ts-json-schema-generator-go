@@ -1,6 +1,9 @@
 package schema
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
 
 func TestEncodeRef(t *testing.T) {
 	// Matches encodeURIComponent: A-Za-z0-9 -_.!~*'() unescaped.
@@ -47,6 +50,57 @@ func TestDefinitionMarshal(t *testing.T) {
 	want = `{"description":"d","properties":{"a":{"type":"number"},"b":{"type":"string"}},"required":["b"],"type":"object"}` + "\n"
 	if string(got) != want {
 		t.Errorf("sorted marshal:\n got %s\nwant %s", got, want)
+	}
+}
+
+func TestDefinitionMarshalNonFiniteNumbers(t *testing.T) {
+	// JSON.stringify renders Infinity and NaN as null; `type X = 1e999`
+	// reaches the schema as +Inf.
+	def := &Definition{
+		Type:  "number",
+		Const: Ptr(math.Inf(1)),
+		Enum:  []any{math.Inf(-1), math.NaN(), 1.5},
+	}
+	def.SetExtra("examples", []any{math.Inf(1), map[string]any{"n": math.NaN()}})
+
+	got, err := MarshalStable(def, false, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"type":"number","enum":[null,null,1.5],"const":null,` +
+		`"examples":[null,{"n":null}]}` + "\n"
+	if string(got) != want {
+		t.Errorf("non-finite marshal:\n got %swant %s", got, want)
+	}
+}
+
+func TestDefinitionMarshalNegativeZero(t *testing.T) {
+	// JSON.stringify(-0) is "0".
+	def := &Definition{Const: Ptr(math.Copysign(0, -1))}
+	got, err := MarshalStable(def, false, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != `{"const":0}`+"\n" {
+		t.Errorf("negative zero should marshal as 0: %s", got)
+	}
+}
+
+func TestDefinitionMarshalExtraDoesNotDuplicateKeys(t *testing.T) {
+	def := &Definition{
+		Type:        "object",
+		Definitions: map[string]*Definition{"A": {Type: "string"}},
+	}
+	def.SetExtra("type", "shadow")
+	def.SetExtra("definitions", "shadow")
+
+	got, err := MarshalStable(def, false, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{"type":"object","definitions":{"A":{"type":"string"}}}` + "\n"
+	if string(got) != want {
+		t.Errorf("shadowing annotations should be dropped:\n got %swant %s", got, want)
 	}
 }
 

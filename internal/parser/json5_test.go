@@ -42,6 +42,13 @@ func TestParseJSON5Values(t *testing.T) {
 		{"block comment", "/* comment */ 42 /* after */", 42.0},
 		{"comment inside object", "{a: /* inline */ 1, // rest\n b: 2}", map[string]any{"a": 1.0, "b": 2.0}},
 		{"whitespace", " \t\n 1 \r\n ", 1.0},
+		{"unicode escape", `"\u00e9"`, "\u00e9"},
+		{"surrogate pair", `"\ud83d\ude00"`, "\U0001F600"},
+		{"surrogate pair in text", `"a\ud83d\ude00b"`, "a\U0001F600b"},
+		{"lone high surrogate", `"\ud83d"`, "\uFFFD"},
+		{"lone low surrogate", `"\ude00"`, "\uFFFD"},
+		{"high surrogate then literal", `"\ud83dA"`, "\uFFFDA"},
+		{"high surrogate then non-surrogate escape", `"\ud83d\u0041"`, "\uFFFDA"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

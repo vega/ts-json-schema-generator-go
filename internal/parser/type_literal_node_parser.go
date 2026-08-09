@@ -40,7 +40,7 @@ func (p *TypeLiteralNodeParser) CreateType(node *ast.Node, context *Context, ref
 		return &types.NeverType{}
 	}
 
-	return types.NewObjectType(id, nil, properties, p.getAdditionalProperties(node, context), false)
+	return types.NewObjectType(id, nil, properties, memberAdditionalProperties(p.childNodeParser, node, context, p.additionalProperties), false)
 }
 
 func (p *TypeLiteralNodeParser) getProperties(node *ast.Node, context *Context) ([]*types.ObjectProperty, bool) {
@@ -56,7 +56,7 @@ func (p *TypeLiteralNodeParser) getProperties(node *ast.Node, context *Context) 
 		}
 
 		property := types.NewObjectProperty(
-			p.getPropertyName(member.Name()),
+			memberPropertyName(p.typeChecker, member.Name()),
 			p.childNodeParser.CreateType(member.Type(), context, nil),
 			member.QuestionToken() == nil,
 		)
@@ -76,29 +76,6 @@ func (p *TypeLiteralNodeParser) getProperties(node *ast.Node, context *Context) 
 	return properties, false
 }
 
-func (p *TypeLiteralNodeParser) getAdditionalProperties(node *ast.Node, context *Context) any {
-	for _, member := range node.Members() {
-		if ast.IsIndexSignatureDeclaration(member) {
-			if t := p.childNodeParser.CreateType(member.Type(), context, nil); t != nil {
-				return t
-			}
-			return p.additionalProperties
-		}
-	}
-	return p.additionalProperties
-}
-
 func (p *TypeLiteralNodeParser) getTypeId(node *ast.Node, context *Context) string {
 	return "structure-" + GetNodeKey(node, context)
-}
-
-func (p *TypeLiteralNodeParser) getPropertyName(propertyName *ast.Node) string {
-	if propertyName.Kind == ast.KindComputedPropertyName {
-		if symbol := tsutils.GetSymbolAtLocation(p.typeChecker, propertyName); symbol != nil {
-			return symbol.Name
-		}
-	}
-	// nodeText falls back to the text property for synthesized nodes,
-	// mirroring the try/catch with escapedText/text upstream.
-	return nodeText(propertyName)
 }

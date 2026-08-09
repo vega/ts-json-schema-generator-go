@@ -25,7 +25,7 @@ func (f *PrimitiveUnionTypeFormatter) GetDefinition(t types.Type) *schema.Defini
 	for _, item := range unionType.Types() {
 		names = append(names, f.getPrimitiveType(item))
 	}
-	return &schema.Definition{Type: uniqueStrings(names)}
+	return &schema.Definition{Type: unique(names)}
 }
 
 func (f *PrimitiveUnionTypeFormatter) GetChildren(t types.Type) []types.Type { return nil }

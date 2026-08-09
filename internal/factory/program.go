@@ -100,16 +100,28 @@ func expandPath(pattern string, cwd string) ([]string, error) {
 	}
 	rootNames := make([]string, len(matches))
 	for i, match := range matches {
-		rootNames[i] = filepath.ToSlash(match)
+		rootNames[i] = resolveSymlinks(match)
 	}
 	return rootNames, nil
+}
+
+// resolveSymlinks returns the symlink-free form of path with forward slashes,
+// falling back to the input when the path cannot be resolved. Node keys spell
+// file names relative to the resolved working directory, so the names reaching
+// the program must be resolved the same way.
+func resolveSymlinks(path string) string {
+	resolved, err := filepath.EvalSymlinks(path)
+	if err != nil {
+		return filepath.ToSlash(path)
+	}
+	return filepath.ToSlash(resolved)
 }
 
 // getTsConfig loads the configured tsconfig or falls back to the default
 // compiler options (factory/program.ts getTsConfig).
 func getTsConfig(cfg *config.Config, cwd string, host compiler.CompilerHost) (*tsoptions.ParsedCommandLine, error) {
 	if cfg.Tsconfig != "" {
-		resolved := tspath.ResolvePath(cwd, filepath.ToSlash(cfg.Tsconfig))
+		resolved := resolveSymlinks(tspath.ResolvePath(cwd, filepath.ToSlash(cfg.Tsconfig)))
 		parsed, errs := tsoptions.GetParsedCommandLineOfConfigFile(resolved, &core.CompilerOptions{}, nil, host, nil)
 		if len(errs) > 0 {
 			return nil, fmt.Errorf("cannot load config file %q:\n%s", resolved, formatDiagnostics(errs))

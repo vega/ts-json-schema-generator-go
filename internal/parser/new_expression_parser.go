@@ -26,30 +26,6 @@ func (p *NewExpressionParser) SupportsNode(node *ast.Node) bool {
 func (p *NewExpressionParser) CreateType(node *ast.Node, context *Context, _ *types.ReferenceType) types.Type {
 	t := p.typeChecker.GetTypeAtLocation(node)
 
-	symbol := t.Symbol()
-	if symbol == nil && t.Alias() != nil {
-		symbol = t.Alias().Symbol()
-	}
-
-	decl := p.typeChecker.TypeToTypeNode(t, node, nodeBuilderFlagsIgnoreErrors, p.synth.Map())
-	if decl == nil && symbol != nil {
-		decl = symbol.ValueDeclaration
-		if decl == nil && len(symbol.Declarations) > 0 {
-			decl = symbol.Declarations[0]
-		}
-	}
-
-	if decl == nil {
-		panic(NewUnknownNodeError(node))
-	}
-
-	return p.childNodeParser.CreateType(decl, p.createSubContext(node, context), nil)
-}
-
-func (p *NewExpressionParser) createSubContext(node *ast.Node, parentContext *Context) *Context {
-	subContext := NewContext(node)
-	for _, arg := range node.Arguments() {
-		subContext.PushArgument(p.childNodeParser.CreateType(arg, parentContext, nil))
-	}
-	return subContext
+	decl := expressionDeclaration(p.typeChecker, t, node, p.synth)
+	return p.childNodeParser.CreateType(decl, newCallArgumentContext(p.childNodeParser, node, context), nil)
 }
