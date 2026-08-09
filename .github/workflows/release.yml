@@ -61,8 +61,7 @@ jobs:
             *.zip
           generate_release_notes: true
 
-  # Publishing is gated on the repository variable PUBLISH_NPM being "true",
-  # so the job stays inert until the npm token is configured.
+  # Publishes all seven packages via npm trusted publishing (OIDC).
   publish-npm:
     needs: build
     runs-on: ubuntu-latest
