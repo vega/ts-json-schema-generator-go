@@ -68,7 +68,7 @@ jobs:
     if: ${{ vars.PUBLISH_NPM == 'true' }}
     runs-on: ubuntu-latest
     permissions:
-      id-token: write # npm provenance
+      id-token: write # OIDC token for npm trusted publishing + provenance
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -100,10 +100,12 @@ jobs:
             *) echo "NPM_TAG=latest" >> "$GITHUB_ENV" ;;
           esac
           node tools/make-npm-packages.mjs --version "$version" --binaries binaries
+      # Publishing authenticates via npm trusted publishing (OIDC): each
+      # package on npmjs.com lists this repo + workflow as a trusted
+      # publisher, so no token secret is involved.
       - name: Publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
+          npm --version
           for package in dist-npm/ts-json-schema-generator-*; do
             npm publish "$package" --provenance --access public --tag "$NPM_TAG"
           done
