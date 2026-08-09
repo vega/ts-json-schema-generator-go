@@ -72,7 +72,6 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 24
-          registry-url: https://registry.npmjs.org
       - uses: actions/download-artifact@v5
         with:
           path: artifacts
@@ -107,7 +106,9 @@ jobs:
       - name: Publish
         run: |
           npm --version
+          # The leading ./ keeps npm from parsing the path as a GitHub
+          # owner/repo shorthand.
           for package in dist-npm/ts-json-schema-generator-*; do
-            npm publish "$package" --provenance --access public --tag "$NPM_TAG"
+            npm publish "./$package" --provenance --access public --tag "$NPM_TAG"
           done
-          npm publish dist-npm/ts-json-schema-generator --provenance --access public --tag "$NPM_TAG"
+          npm publish ./dist-npm/ts-json-schema-generator --provenance --access public --tag "$NPM_TAG"
