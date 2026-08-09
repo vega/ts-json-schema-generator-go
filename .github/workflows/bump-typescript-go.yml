@@ -25,7 +25,7 @@ jobs:
         run: tools/bump-tsgo.sh main
       - name: Test against the fixture oracle
         run: go test ./...
-      - uses: peter-evans/create-pull-request@v7
+      - uses: peter-evans/create-pull-request@v8
         with:
           branch: bump-typescript-go
           title: "Bump typescript-go to latest main"
