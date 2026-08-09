@@ -2,7 +2,7 @@
 
 Generate JSON schema from your TypeScript sources.
 
-Version 3 is a native binary built on [typescript-go](https://github.com/microsoft/typescript-go), the compiler that ships as TypeScript 7. The interface is the CLI; the package also exposes a thin [programmatic wrapper](#programmatic-usage) that runs it for you.
+Version 3 is a native binary built on [typescript-go](https://github.com/microsoft/typescript-go), the compiler released as TypeScript 7. The interface is the CLI; the package also exposes a thin [programmatic wrapper](#programmatic-usage) that runs it for you.
 
 Installing this package pulls in a small platform-specific package containing the binary for your OS and CPU (macOS, Linux, and Windows on x64 and arm64).
 
