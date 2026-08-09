@@ -261,8 +261,6 @@ const FindAncestorTrue = ast.FindAncestorTrue
 func FindConstructorDeclaration(node *ast.ClassLikeDeclaration) *ast.Node
 //go:linkname FindLastVisibleNode github.com/microsoft/typescript-go/internal/ast.FindLastVisibleNode
 func FindLastVisibleNode(nodes []*ast.Node) *ast.Node
-//go:linkname FindManyAncestors github.com/microsoft/typescript-go/internal/ast.FindManyAncestors
-func FindManyAncestors(node *ast.Node, callbacks ...func(*ast.Node) bool) []*ast.Node
 type FlowFlags = ast.FlowFlags
 const FlowFlagsArrayMutation = ast.FlowFlagsArrayMutation
 const FlowFlagsAssignment = ast.FlowFlagsAssignment
@@ -2512,6 +2510,7 @@ const SymbolFlagsBlockScopedVariableExcludes = ast.SymbolFlagsBlockScopedVariabl
 const SymbolFlagsClass = ast.SymbolFlagsClass
 const SymbolFlagsClassExcludes = ast.SymbolFlagsClassExcludes
 const SymbolFlagsClassMember = ast.SymbolFlagsClassMember
+const SymbolFlagsClassifiable = ast.SymbolFlagsClassifiable
 const SymbolFlagsConstEnum = ast.SymbolFlagsConstEnum
 const SymbolFlagsConstEnumExcludes = ast.SymbolFlagsConstEnumExcludes
 const SymbolFlagsConstEnumOnlyModule = ast.SymbolFlagsConstEnumOnlyModule
