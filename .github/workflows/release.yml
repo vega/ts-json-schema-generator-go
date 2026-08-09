@@ -100,15 +100,26 @@ jobs:
             *) echo "NPM_TAG=latest" >> "$GITHUB_ENV" ;;
           esac
           node tools/make-npm-packages.mjs --version "$version" --binaries binaries
-      # Publishing authenticates via npm trusted publishing (OIDC): each
-      # package on npmjs.com lists this repo + workflow as a trusted
-      # publisher, so no token secret is involved.
-      - name: Publish
+      # The platform packages authenticate via npm trusted publishing
+      # (OIDC): each lists this repo + workflow as its trusted publisher.
+      # The leading ./ keeps npm from parsing the path as a GitHub
+      # owner/repo shorthand.
+      - name: Publish platform packages
         run: |
           npm --version
-          # The leading ./ keeps npm from parsing the path as a GitHub
-          # owner/repo shorthand.
           for package in dist-npm/ts-json-schema-generator-*; do
             npm publish "./$package" --provenance --access public --tag "$NPM_TAG"
           done
+      # The main package's trusted-publisher slot belongs to
+      # vega/ts-json-schema-generator, whose automation publishes the 2.x
+      # line. Until that line is retired, this repo publishes the main
+      # package with a granular token scoped to it; without the secret,
+      # the publish attempts OIDC (correct once the slot moves here).
+      - name: Publish main package
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          if [ -n "$NPM_TOKEN" ]; then
+            npm config set "//registry.npmjs.org/:_authToken=$NPM_TOKEN"
+          fi
           npm publish ./dist-npm/ts-json-schema-generator --provenance --access public --tag "$NPM_TAG"
