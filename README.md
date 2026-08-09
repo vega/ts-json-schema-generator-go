@@ -14,7 +14,15 @@ npm install --save-dev ts-json-schema-generator@native
 npx ts-json-schema-generator --path 'my/project/**/*.ts' --type 'My.Type.Name'
 ```
 
-The `native` dist-tag of [`ts-json-schema-generator`](https://www.npmjs.com/package/ts-json-schema-generator) is this CLI — the package pulls in a platform-specific binary via one of the platform packages and exposes no programmatic API; `2.x` remains the Node.js library, and the `next`/`canary` tags belong to its release automation.
+The `native` dist-tag of [`ts-json-schema-generator`](https://www.npmjs.com/package/ts-json-schema-generator) is this CLI — the package pulls in a platform-specific binary via one of the platform packages; `2.x` remains the Node.js library, and the `next`/`canary` tags belong to its release automation.
+
+The package also exports `generateSchema(config)` and `generateSchemaSync(config)`, which run the binary and return the parsed schema:
+
+```js
+const schema = await generateSchema({ path: "src/types.ts", type: "MyType" });
+```
+
+The config keys mirror the 2.x `Config` type. Anything that carries a JavaScript value across the process boundary — an existing `tsProgram`, custom parsers, formatters, or `SchemaGenerator` subclasses — is unsupported and throws; those uses belong on 2.x.
 
 Platform binary packages (installed automatically as optional dependencies):
 [darwin-arm64](https://www.npmjs.com/package/ts-json-schema-generator-darwin-arm64) ·

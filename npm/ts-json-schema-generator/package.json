@@ -22,8 +22,13 @@
   "bin": {
     "ts-json-schema-generator": "bin/ts-json-schema-generator.js"
   },
+  "main": "index.js",
+  "types": "index.d.ts",
   "files": [
     "bin/ts-json-schema-generator.js",
+    "index.js",
+    "index.d.ts",
+    "resolve-binary.js",
     "README.md"
   ],
   "optionalDependencies": {

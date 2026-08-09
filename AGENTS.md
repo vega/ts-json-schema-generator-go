@@ -97,7 +97,10 @@ Deliberate and documented in commit history:
    lib files moved several onto base interfaces, e.g. CSSStyleDeclaration).
 4. Sourceless (synthesized) node keys use the node address instead of
    `Math.random()` — stable within a run, so caching works.
-5. The programmatic Node.js API is not provided; the CLI is the interface.
+5. The programmatic Node.js API is not ported; the CLI is the interface. The
+   npm package wraps it with `generateSchema`/`generateSchemaSync` (config in,
+   schema out), which cover config-only usage — `tsProgram` and the augmentors
+   have no equivalent across a process boundary.
 
 ## Downstream regression tests
 

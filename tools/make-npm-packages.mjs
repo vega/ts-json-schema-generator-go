@@ -108,6 +108,8 @@ mkdirSync(join(mainDir, "bin"), { recursive: true });
 writeFileSync(join(mainDir, "package.json"), `${JSON.stringify(manifest, null, 2)}\n`);
 copyFileSync(join(source, "bin", "ts-json-schema-generator.js"), join(mainDir, "bin", "ts-json-schema-generator.js"));
 chmodSync(join(mainDir, "bin", "ts-json-schema-generator.js"), 0o755);
-copyFileSync(join(source, "README.md"), join(mainDir, "README.md"));
+for (const file of ["index.js", "index.d.ts", "resolve-binary.js", "README.md"]) {
+    copyFileSync(join(source, file), join(mainDir, file));
+}
 copyFileSync(join(root, "LICENSE"), join(mainDir, "LICENSE"));
 console.log(`packaged ts-json-schema-generator@${version} (${built.length}/${TARGETS.length} platforms)`);
