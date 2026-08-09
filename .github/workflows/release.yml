@@ -60,3 +60,51 @@ jobs:
             *.tar.gz
             *.zip
           generate_release_notes: true
+
+  # Publishing is gated on the repository variable PUBLISH_NPM being "true",
+  # so the job stays inert until the npm token is configured.
+  publish-npm:
+    needs: build
+    if: ${{ vars.PUBLISH_NPM == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # npm provenance
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: Extract binaries
+        run: |
+          mkdir -p binaries
+          for archive in artifacts/*.tar.gz; do
+            [ -e "$archive" ] || continue
+            tar xzf "$archive" -C binaries
+          done
+          for archive in artifacts/*.zip; do
+            [ -e "$archive" ] || continue
+            unzip -o -q "$archive" -d binaries
+          done
+          ls -l binaries
+      - name: Assemble packages
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "NPM_VERSION=$version" >> "$GITHUB_ENV"
+          case "$version" in
+            *-*) echo "NPM_TAG=next" >> "$GITHUB_ENV" ;;
+            *) echo "NPM_TAG=latest" >> "$GITHUB_ENV" ;;
+          esac
+          node tools/make-npm-packages.mjs --version "$version" --binaries binaries
+      - name: Publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          for package in dist-npm/ts-json-schema-generator-*; do
+            npm publish "$package" --provenance --access public --tag "$NPM_TAG"
+          done
+          npm publish dist-npm/ts-json-schema-generator --provenance --access public --tag "$NPM_TAG"

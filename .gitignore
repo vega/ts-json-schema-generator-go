@@ -1,4 +1,5 @@
 node_modules/
-ts-json-schema-generator
+/ts-json-schema-generator
 *.test
 dist/
+dist-npm/

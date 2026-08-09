@@ -1,0 +1,40 @@
+{
+  "name": "ts-json-schema-generator",
+  "version": "0.0.0-dev",
+  "description": "Generate JSON schema from your TypeScript sources — native TypeScript 7 CLI",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vega/ts-json-schema-generator-go.git"
+  },
+  "homepage": "https://github.com/vega/ts-json-schema-generator-go#readme",
+  "bugs": {
+    "url": "https://github.com/vega/ts-json-schema-generator-go/issues"
+  },
+  "keywords": [
+    "typescript",
+    "json-schema",
+    "schema",
+    "generator",
+    "cli",
+    "typescript-go"
+  ],
+  "bin": {
+    "ts-json-schema-generator": "bin/ts-json-schema-generator.js"
+  },
+  "files": [
+    "bin/ts-json-schema-generator.js",
+    "README.md"
+  ],
+  "optionalDependencies": {
+    "ts-json-schema-generator-darwin-arm64": "0.0.0-dev",
+    "ts-json-schema-generator-darwin-x64": "0.0.0-dev",
+    "ts-json-schema-generator-linux-arm64": "0.0.0-dev",
+    "ts-json-schema-generator-linux-x64": "0.0.0-dev",
+    "ts-json-schema-generator-win32-arm64": "0.0.0-dev",
+    "ts-json-schema-generator-win32-x64": "0.0.0-dev"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

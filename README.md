@@ -7,6 +7,15 @@ This is the native port of [vega/ts-json-schema-generator](https://github.com/ve
 > [!NOTE]
 > This port was fully AI-generated (by Claude, against the TypeScript reference implementation and its golden-schema test suite). See [AGENTS.md](AGENTS.md) for provenance and working conventions.
 
+## Install from npm
+
+```bash
+npm install --save-dev ts-json-schema-generator@next
+npx ts-json-schema-generator --path 'my/project/**/*.ts' --type 'My.Type.Name'
+```
+
+The `3.x` line on npm is this native CLI — the package pulls in a platform-specific binary and exposes no programmatic API; `2.x` remains the Node.js library. The packaging sources live in [`npm/`](npm) and are assembled by [`tools/make-npm-packages.mjs`](tools/make-npm-packages.mjs).
+
 ## Usage
 
 ```bash
