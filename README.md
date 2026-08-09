@@ -4,6 +4,9 @@ Generate JSON schema from your TypeScript sources — implemented in Go on top o
 
 This is the native port of [vega/ts-json-schema-generator](https://github.com/vega/ts-json-schema-generator). The TypeScript implementation over there is the reference: the Go code mirrors it module for module, and both produce the same schemas (verified by 251 golden-schema fixtures and a full [vega-lite](https://github.com/vega/vega-lite) schema comparison). The CLI is a single binary with no Node.js dependency, and the whole test corpus runs in seconds.
 
+> [!NOTE]
+> This port was fully AI-generated (by Claude, against the TypeScript reference implementation and its golden-schema test suite). See [AGENTS.md](AGENTS.md) for provenance and working conventions.
+
 ## Usage
 
 ```bash
