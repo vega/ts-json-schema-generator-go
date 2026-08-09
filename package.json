@@ -5,6 +5,6 @@
   "devDependencies": {
     "@types/node": "^26.0.1",
     "vega-lite": "6.4.1",
-    "@uwdata/mosaic-spec": "0.28.1"
+    "@uwdata/mosaic-spec": "0.30.0"
   }
 }

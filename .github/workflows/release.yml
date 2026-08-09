@@ -65,7 +65,6 @@ jobs:
   # so the job stays inert until the npm token is configured.
   publish-npm:
     needs: build
-    if: ${{ vars.PUBLISH_NPM == 'true' }}
     runs-on: ubuntu-latest
     permissions:
       id-token: write # OIDC token for npm trusted publishing + provenance
