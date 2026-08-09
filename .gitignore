@@ -1,0 +1,4 @@
+node_modules/
+ts-json-schema-generator
+*.test
+dist/

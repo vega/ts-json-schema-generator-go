@@ -1,0 +1,25 @@
+{
+  "$ref": "#/definitions/myFunction",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "myFunction": {
+      "$comment": "(\n    /**\n     * @description Inline parameter description\n     */\n    requiredString: string) =>undefined",
+      "properties": {
+        "namedArgs": {
+          "additionalProperties": false,
+          "properties": {
+            "requiredString": {
+              "description": "Inline parameter description",
+              "type": "string"
+            }
+          },
+          "required": [
+            "requiredString"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  }
+}

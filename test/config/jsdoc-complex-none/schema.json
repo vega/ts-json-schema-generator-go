@@ -1,0 +1,68 @@
+{
+  "$ref": "#/definitions/MyObject",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "MyExportString": {
+      "type": "string"
+    },
+    "MyNonEmptyArray<number>": {
+      "items": {
+        "type": "number"
+      },
+      "type": "array"
+    },
+    "MyObject": {
+      "additionalProperties": false,
+      "properties": {
+        "exportString": {
+          "$ref": "#/definitions/MyExportString"
+        },
+        "nullableValue": {
+          "type": [
+            "number",
+            "string",
+            "null"
+          ]
+        },
+        "number": {
+          "type": "number"
+        },
+        "numberArray": {
+          "$ref": "#/definitions/MyNonEmptyArray%3Cnumber%3E"
+        },
+        "numberValue": {
+          "type": "number"
+        },
+        "optionalValue": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "privateString": {
+          "type": "string"
+        },
+        "requiredValue": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "stringValue": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "stringValue",
+        "numberValue",
+        "requiredValue",
+        "nullableValue",
+        "exportString",
+        "privateString",
+        "numberArray",
+        "number"
+      ],
+      "type": "object"
+    }
+  }
+}

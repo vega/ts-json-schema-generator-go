@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "target": "esnext",
+    "module": "CommonJS",
+    "strictNullChecks": false,
+    "allowJs": true,
+    "rootDir": "./src",
+    "types": ["node"],
+    "paths": {
+      "@src/*": ["./src/*"]
+    }
+  },
+  "files": ["src/main.ts"]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "ts-json-schema-generator-go-dev",
+  "private": true,
+  "description": "Dev-only dependencies for the test suite: the vega-lite regression test generates a schema from the vega-lite TypeScript sources.",
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "vega-lite": "6.4.1"
+  }
+}

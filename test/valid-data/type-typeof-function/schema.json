@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Test": {
+      "additionalProperties": false,
+      "properties": {
+        "checkServerIdentity": {
+          "$comment": "(hostname: string) => Error | undefined",
+          "properties": {
+            "namedArgs": {
+              "additionalProperties": false,
+              "properties": {
+                "hostname": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "hostname"
+              ],
+              "type": "object"
+            }
+          },
+          "type": "object"
+        },
+        "otherProp": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "otherProp"
+      ],
+      "type": "object"
+    },
+    "checkServerIdentity": {
+      "$comment": "(hostname: string) => Error | undefined",
+      "properties": {
+        "namedArgs": {
+          "additionalProperties": false,
+          "properties": {
+            "hostname": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "hostname"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "object"
+    }
+  }
+}
