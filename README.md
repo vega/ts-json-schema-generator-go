@@ -10,11 +10,21 @@ This is the native port of [vega/ts-json-schema-generator](https://github.com/ve
 ## Install from npm
 
 ```bash
-npm install --save-dev ts-json-schema-generator@next
+npm install --save-dev ts-json-schema-generator@native
 npx ts-json-schema-generator --path 'my/project/**/*.ts' --type 'My.Type.Name'
 ```
 
-The `3.x` line on npm is this native CLI — the package pulls in a platform-specific binary and exposes no programmatic API; `2.x` remains the Node.js library. The packaging sources live in [`npm/`](npm) and are assembled by [`tools/make-npm-packages.mjs`](tools/make-npm-packages.mjs).
+The `native` dist-tag of [`ts-json-schema-generator`](https://www.npmjs.com/package/ts-json-schema-generator) is this CLI — the package pulls in a platform-specific binary via one of the platform packages and exposes no programmatic API; `2.x` remains the Node.js library, and the `next`/`canary` tags belong to its release automation.
+
+Platform binary packages (installed automatically as optional dependencies):
+[darwin-arm64](https://www.npmjs.com/package/ts-json-schema-generator-darwin-arm64) ·
+[darwin-x64](https://www.npmjs.com/package/ts-json-schema-generator-darwin-x64) ·
+[linux-x64](https://www.npmjs.com/package/ts-json-schema-generator-linux-x64) ·
+[linux-arm64](https://www.npmjs.com/package/ts-json-schema-generator-linux-arm64) ·
+[win32-x64](https://www.npmjs.com/package/ts-json-schema-generator-win32-x64) ·
+[win32-arm64](https://www.npmjs.com/package/ts-json-schema-generator-win32-arm64)
+
+The packaging sources live in [`npm/`](npm) and are assembled by [`tools/make-npm-packages.mjs`](tools/make-npm-packages.mjs); releases publish via npm trusted publishing from [`release.yml`](.github/workflows/release.yml).
 
 ## Usage
 
