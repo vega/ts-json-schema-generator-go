@@ -108,6 +108,13 @@ jobs:
         run: |
           npm --version
           for package in dist-npm/ts-json-schema-generator-*; do
+            name=$(basename "$package")
+            # Skip versions that already exist so a partially published
+            # release can be re-run.
+            if npm view "$name@$NPM_VERSION" version >/dev/null 2>&1; then
+              echo "$name@$NPM_VERSION already published, skipping"
+              continue
+            fi
             npm publish "./$package" --provenance --access public --tag "$NPM_TAG"
           done
       # The main package's trusted-publisher slot belongs to
