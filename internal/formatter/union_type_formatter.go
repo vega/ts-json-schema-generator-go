@@ -97,7 +97,7 @@ func (f *UnionTypeFormatter) getJSONSchemaDiscriminatorDefinition(unionType *typ
 	if len(duplicates) > 0 {
 		strs := make([]string, len(duplicates))
 		for i, d := range duplicates {
-			strs[i] = rawValueToString(d)
+			strs[i] = types.JSValueToString(d)
 		}
 		panic(fmt.Errorf(
 			"duplicate discriminator values: %s in type %q",
@@ -180,26 +180,4 @@ func isOnlyAnyOf(def *schema.Definition) bool {
 	check := *def
 	check.AnyOf = nil
 	return isEmptyDefinition(&check)
-}
-
-// rawValueToString renders a raw JSON value the way JavaScript's implicit
-// string conversion does in Array#join.
-func rawValueToString(v any) string {
-	switch x := v.(type) {
-	case nil:
-		return "null"
-	case string:
-		return x
-	case bool:
-		if x {
-			return "true"
-		}
-		return "false"
-	case float64:
-		return types.NumberToString(x)
-	case int:
-		return types.NumberToString(float64(x))
-	default:
-		return fmt.Sprintf("%v", x)
-	}
 }

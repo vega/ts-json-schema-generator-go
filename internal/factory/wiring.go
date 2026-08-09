@@ -1,7 +1,8 @@
 package factory
 
 // Wiring of the parser and formatter chains, mirroring factory/parser.ts and
-// factory/formatter.ts. Dropped into internal/factory at integration time.
+// factory/formatter.ts. Registration order is load-bearing: the first parser
+// or formatter whose Supports* method matches wins.
 
 import (
 	"github.com/microsoft/typescript-go/shim/checker"

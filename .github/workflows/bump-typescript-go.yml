@@ -32,6 +32,5 @@ jobs:
           commit-message: "chore: bump typescript-go and regenerate shims"
           body: |
             Automated weekly bump of the pinned typescript-go version, with
-            shims regenerated. The full fixture suite (251 golden schemas,
-            vega-lite, mosaic) passed against the new compiler before this
-            PR was opened.
+            shims regenerated. CI runs the fixture suite (golden schemas,
+            vega-lite, mosaic) against the new compiler.

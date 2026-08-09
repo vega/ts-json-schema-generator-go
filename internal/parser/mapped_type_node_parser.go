@@ -145,7 +145,7 @@ func (p *MappedTypeNodeParser) getProperties(node *ast.Node, keyListType *types.
 		}
 
 		result = append(result, types.NewObjectProperty(
-			jsValueToString(mappedKey.Value),
+			types.JSValueToString(mappedKey.Value),
 			types.PreserveAnnotation(propertyType, newType),
 			p.isMappedPropertyRequired(node, hasUndefined),
 		))
@@ -166,7 +166,7 @@ func (p *MappedTypeNodeParser) getValues(node *ast.Node, keyListType *types.Enum
 			p.createSubContext(node, &types.LiteralType{Value: value}, context),
 			nil,
 		)
-		result = append(result, types.NewObjectProperty(jsValueToString(value), valueType, p.isMappedPropertyRequired(node, false)))
+		result = append(result, types.NewObjectProperty(types.JSValueToString(value), valueType, p.isMappedPropertyRequired(node, false)))
 	}
 	return result
 }
@@ -206,24 +206,4 @@ func (p *MappedTypeNodeParser) createSubContext(node *ast.Node, key types.Type, 
 	subContext.PushArgument(key)
 
 	return subContext
-}
-
-// jsValueToString mirrors JavaScript's String(value) for literal and enum
-// values (string, number, boolean).
-func jsValueToString(value any) string {
-	switch v := value.(type) {
-	case string:
-		return v
-	case bool:
-		if v {
-			return "true"
-		}
-		return "false"
-	case float64:
-		return types.NumberToString(v)
-	case int:
-		return types.NumberToString(float64(v))
-	default:
-		return fmt.Sprintf("%v", v)
-	}
 }

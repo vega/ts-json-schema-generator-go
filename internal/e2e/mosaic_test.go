@@ -12,8 +12,7 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/factory"
 )
 
-// TestMosaic generates the Mosaic spec schema from the vendored
-// @uwdata/mosaic-spec sources (see test/mosaic/README.md) using the same
+// TestMosaic generates the Mosaic spec schema from the @uwdata/mosaic-spec sources (fetched from npm by scripts/fetch-mosaic-spec.mjs) using the same
 // invocation mosaic's build uses:
 //
 //	ts-json-schema-generator -p src/spec/Spec.ts -t Spec \
@@ -29,8 +28,13 @@ import (
 func TestMosaic(t *testing.T) {
 	root := repoRoot(t)
 
+	specDir := filepath.Join(root, "node_modules", "@uwdata", "mosaic-spec")
+	if _, err := os.Stat(filepath.Join(specDir, "src", "spec", "Spec.ts")); err != nil {
+		t.Skip("mosaic-spec sources not installed (run npm install)")
+	}
+
 	cfg := config.Default()
-	cfg.Path = filepath.Join(root, "test", "mosaic", "spec", "Spec.ts")
+	cfg.Path = filepath.Join(specDir, "src", "spec", "Spec.ts")
 	cfg.Types = []string{"Spec"}
 	cfg.EncodeRefs = false
 	cfg.SkipTypeCheck = true
@@ -48,7 +52,7 @@ func TestMosaic(t *testing.T) {
 	}
 
 	actual := roundTrip(t, generated)
-	goldenBytes, err := os.ReadFile(filepath.Join(root, "test", "mosaic", "schema.json"))
+	goldenBytes, err := os.ReadFile(filepath.Join(specDir, "dist", "mosaic-schema.json"))
 	if err != nil {
 		t.Fatalf("read golden: %v", err)
 	}
@@ -73,7 +77,7 @@ func TestMosaic(t *testing.T) {
 		for _, line := range diffs[:limit] {
 			t.Error(line)
 		}
-		t.Fatalf("generated mosaic schema differs from test/mosaic/schema.json (%d differences)", len(diffs))
+		t.Fatalf("generated mosaic schema differs from the published mosaic-schema.json (%d differences)", len(diffs))
 	}
 }
 

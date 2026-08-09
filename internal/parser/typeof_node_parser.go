@@ -2,7 +2,6 @@ package parser
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
@@ -66,9 +65,9 @@ func (p *TypeofNodeParser) CreateType(node *ast.Node, ctx *Context, reference *t
 
 	if ast.IsFunctionDeclaration(valueDec) {
 		return &types.FunctionType{
-			Comment:        functionComment(valueDec),
-			NamedArguments: namedArguments(p.childNodeParser, valueDec, ctx),
-			ReturnType:     returnTypeOfFunction(p.childNodeParser, valueDec, ctx),
+			Comment:        signatureComment(valueDec, ""),
+			NamedArguments: GetNamedArguments(p.childNodeParser, valueDec, ctx),
+			ReturnType:     GetReturnType(p.childNodeParser, valueDec, ctx),
 		}
 	}
 
@@ -106,78 +105,4 @@ func (p *TypeofNodeParser) createObjectFromEnum(node *ast.Node, ctx *Context, re
 	}
 
 	return types.NewObjectType(id, nil, properties, false, false)
-}
-
-// ---------------------------------------------------------------------------
-// Helpers shared with FunctionNodeParser/ConstructorNodeParser in the
-// TypeScript implementation (src/NodeParser/FunctionNodeParser.ts).
-
-// namedArguments builds the object type describing a function-like node's
-// parameters (getNamedArguments in FunctionNodeParser.ts).
-func namedArguments(childNodeParser NodeParser, node *ast.Node, ctx *Context) *types.ObjectType {
-	parameters := node.Parameters()
-	if len(parameters) == 0 {
-		return nil
-	}
-
-	// Note: the TypeScript implementation returns the parsed InferType
-	// directly when the sole parameter is `(...args: infer T)`. Infer types
-	// cannot occur in the declarations handled here and the Go FunctionType
-	// model only holds an ObjectType, so that special case is omitted.
-
-	properties := make([]*types.ObjectProperty, len(parameters))
-	for i, parameter := range parameters {
-		parameterType := childNodeParser.CreateType(parameter, ctx, nil)
-
-		// If it's missing a questionToken but has an initializer we can
-		// consider the property as not required.
-		declaration := parameter.AsParameterDeclaration()
-		required := declaration.QuestionToken == nil && declaration.Initializer == nil
-
-		properties[i] = types.NewObjectProperty(scanner.GetTextOfNode(parameter.Name()), parameterType, required)
-	}
-
-	return types.NewObjectType("object-"+GetNodeKey(node, ctx), nil, properties, false, false)
-}
-
-// returnTypeOfFunction resolves a function-like node's return type
-// (getReturnType in FunctionNodeParser.ts).
-func returnTypeOfFunction(childNodeParser NodeParser, node *ast.Node, ctx *Context) types.Type {
-	returnType := node.Type()
-	if returnType == nil {
-		return nil
-	}
-	// Type predicates (`value is T` / `asserts value is T` / `asserts value`)
-	// are compile-time-only constructs. At runtime, type guards return boolean
-	// and assertion functions return void.
-	if ast.IsTypePredicateNode(returnType) {
-		if returnType.AsTypePredicateNode().AssertsModifier != nil {
-			return &types.VoidType{}
-		}
-		return &types.BooleanType{}
-	}
-	return childNodeParser.CreateType(returnType, ctx, nil)
-}
-
-// functionComment renders the signature comment stored on FunctionType
-// (src/Type/FunctionType.ts constructor), including the "undefined" artifact
-// for a missing return type annotation.
-func functionComment(node *ast.Node) string {
-	source := ast.GetSourceFileOfNode(node)
-	fullText := func(n *ast.Node) string {
-		return source.Text()[n.Pos():n.End()]
-	}
-
-	parameters := node.Parameters()
-	parts := make([]string, len(parameters))
-	for i, parameter := range parameters {
-		parts[i] = fullText(parameter)
-	}
-
-	returnText := "undefined"
-	if returnType := node.Type(); returnType != nil {
-		returnText = fullText(returnType)
-	}
-
-	return "(" + strings.Join(parts, ",") + ") =>" + returnText
 }

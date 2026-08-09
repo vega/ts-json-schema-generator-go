@@ -28,8 +28,6 @@ type ExtraShim struct {
 func main() {
 	packagesToShim := []string{
 		"ast",
-		"collections",
-		"diagnostics",
 		"jsnum",
 		"bundled",
 		"checker",
@@ -38,8 +36,6 @@ func main() {
 		"scanner",
 		"tsoptions",
 		"tspath",
-		"vfs",
-		"vfs/cachedvfs",
 		"vfs/osvfs",
 	}
 
@@ -180,9 +176,9 @@ func main() {
 				shimBuilder.WriteString("\n")
 			}
 
-			switch object.(type) {
+			switch object := object.(type) {
 			case *types.TypeName:
-				typeName := object.(*types.TypeName)
+				typeName := object
 				t := typeName.Type()
 				named, isNamed := t.(*types.Named)
 				if isNamed {
@@ -352,8 +348,7 @@ func main() {
 				printReexport("var")
 			case *types.Func:
 				if !slices.Contains(extraShim.IgnoreFunctions, name) {
-					funcType := object.(*types.Func)
-					emitLinkedFunction(funcType)
+					emitLinkedFunction(object)
 				}
 			}
 		}

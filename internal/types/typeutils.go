@@ -73,7 +73,7 @@ func extractLiterals(t Type, out *[]string) {
 	}
 	switch d := DerefAnnotatedType(t).(type) {
 	case *LiteralType:
-		*out = append(*out, literalToString(d.Value))
+		*out = append(*out, JSValueToString(d.Value))
 	case *UnionType:
 		for _, m := range d.Types() {
 			extractLiterals(m, out)
@@ -93,8 +93,12 @@ func extractLiterals(t Type, out *[]string) {
 	}
 }
 
-func literalToString(v LiteralValue) string {
+// JSValueToString mirrors JavaScript's String(value) for the JSON scalar
+// values that flow through literals, enums, and annotations.
+func JSValueToString(v any) string {
 	switch x := v.(type) {
+	case nil:
+		return "null"
 	case string:
 		return x
 	case bool:

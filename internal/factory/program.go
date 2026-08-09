@@ -79,7 +79,7 @@ func CreateProgram(cfg *config.Config) (*compiler.Program, *checker.Checker, fun
 		diagnostics = append(diagnostics, program.GetSyntacticDiagnostics(ctx, nil)...)
 		diagnostics = append(diagnostics, program.GetSemanticDiagnostics(ctx, nil)...)
 		if len(diagnostics) > 0 {
-			return nil, nil, nil, fmt.Errorf("Type check error:\n%s", formatDiagnostics(diagnostics))
+			return nil, nil, nil, fmt.Errorf("type check error:\n%s", formatDiagnostics(diagnostics))
 		}
 	}
 
@@ -119,6 +119,7 @@ func getTsConfig(cfg *config.Config, cwd string, host compiler.CompilerHost) (*t
 		options := parsed.CompilerOptions()
 		options.NoEmit = core.TSTrue
 		options.OutDir = ""
+		//lint:ignore SA1019 mirrors factory/program.ts clearing the option before program creation
 		options.OutFile = ""
 		options.Declaration = core.TSUnknown
 		options.DeclarationDir = ""

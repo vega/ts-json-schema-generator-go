@@ -1,9 +1,12 @@
 {
   "name": "ts-json-schema-generator-go-dev",
   "private": true,
-  "description": "Dev-only dependencies for the test suite: the vega-lite regression test generates a schema from the vega-lite TypeScript sources.",
+  "description": "Dev-only dependencies for the test suite: vega-lite and mosaic schema regression tests compile the published TypeScript sources of those projects.",
   "devDependencies": {
     "@types/node": "^26.0.1",
     "vega-lite": "6.4.1"
+  },
+  "scripts": {
+    "postinstall": "node scripts/fetch-mosaic-spec.mjs"
   }
 }
