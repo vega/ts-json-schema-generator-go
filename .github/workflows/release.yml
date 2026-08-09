@@ -95,8 +95,11 @@ jobs:
         run: |
           version="${GITHUB_REF_NAME#v}"
           echo "NPM_VERSION=$version" >> "$GITHUB_ENV"
+          # The "next" and "canary" dist-tags belong to the TypeScript
+          # implementation's release bot; the native build publishes
+          # prereleases under "native".
           case "$version" in
-            *-*) echo "NPM_TAG=next" >> "$GITHUB_ENV" ;;
+            *-*) echo "NPM_TAG=native" >> "$GITHUB_ENV" ;;
             *) echo "NPM_TAG=latest" >> "$GITHUB_ENV" ;;
           esac
           node tools/make-npm-packages.mjs --version "$version" --binaries binaries
