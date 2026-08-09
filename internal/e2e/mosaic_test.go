@@ -12,7 +12,7 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/factory"
 )
 
-// TestMosaic generates the Mosaic spec schema from the @uwdata/mosaic-spec sources (fetched from npm by scripts/fetch-mosaic-spec.mjs) using the same
+// TestMosaic generates the Mosaic spec schema from the @uwdata/mosaic-spec sources (installed from npm) using the same
 // invocation mosaic's build uses:
 //
 //	ts-json-schema-generator -p src/spec/Spec.ts -t Spec \
