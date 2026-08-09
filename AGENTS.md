@@ -92,4 +92,23 @@ Deliberate and documented in commit history:
 1. `keyof`-derived literal unions enumerate in the native checker's order
    (deterministic, same value sets; affected goldens were updated).
 2. JSDoc `{@link}` text rendering matches the services-layer display parts.
-3. The programmatic Node.js API is not provided; the CLI is the interface.
+3. `keyof` also honors index signatures inherited from base interfaces
+   (the TypeScript implementation only checks own signatures; TypeScript 7's
+   lib files moved several onto base interfaces, e.g. CSSStyleDeclaration).
+4. Sourceless (synthesized) node keys use the node address instead of
+   `Math.random()` — stable within a run, so caching works.
+5. The programmatic Node.js API is not provided; the CLI is the interface.
+
+## Downstream regression tests
+
+- `internal/e2e/vegalite_test.go` — full vega-lite schema (sources from npm).
+- `internal/e2e/mosaic_test.go` — Mosaic/vgplot spec schema from the vendored
+  `test/mosaic` snapshot, using mosaic's own CLI invocation; CSSStyles
+  properties are compared as a superset because they track the lib.dom
+  version.
+
+## Keeping up with typescript-go
+
+`tools/bump-tsgo.sh <ref>` re-pins the compiler and regenerates shims; the
+weekly `bump-typescript-go` workflow does this against `main` and opens a PR
+only if the full test oracle passes.

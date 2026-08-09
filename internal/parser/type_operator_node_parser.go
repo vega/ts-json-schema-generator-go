@@ -16,6 +16,24 @@ func NewTypeOperatorNodeParser(childNodeParser NodeParser) *TypeOperatorNodePars
 	return &TypeOperatorNodeParser{childNodeParser: childNodeParser}
 }
 
+// hasTypedAdditionalProperties reports whether the object or any of its base
+// types carries a typed index signature. The TypeScript implementation only
+// checks the object's own additionalProperties; since TypeScript 7's lib
+// files moved several index signatures onto base interfaces (for example
+// CSSStyleDeclaration), the inherited case must count too for `keyof` to keep
+// producing `string`.
+func hasTypedAdditionalProperties(object *types.ObjectType) bool {
+	if _, ok := object.AdditionalProperties.(types.Type); ok {
+		return true
+	}
+	for _, base := range object.BaseTypes {
+		if parent, ok := types.DerefType(base).(*types.ObjectType); ok && hasTypedAdditionalProperties(parent) {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *TypeOperatorNodeParser) SupportsNode(node *ast.Node) bool {
 	return node.Kind == ast.KindTypeOperator
 }
@@ -40,10 +58,8 @@ func (p *TypeOperatorNodeParser) CreateType(node *ast.Node, ctx *Context, _ *typ
 		keyTypes[i] = key
 	}
 
-	if object, isObject := derefed.(*types.ObjectType); isObject {
-		if _, hasTypedAdditional := object.AdditionalProperties.(types.Type); hasTypedAdditional {
-			return types.NewUnionType(append(keyTypes, &types.StringType{}))
-		}
+	if object, isObject := derefed.(*types.ObjectType); isObject && hasTypedAdditionalProperties(object) {
+		return types.NewUnionType(append(keyTypes, &types.StringType{}))
 	}
 
 	if len(keys) == 1 {

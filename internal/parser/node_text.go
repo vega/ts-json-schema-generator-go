@@ -45,16 +45,25 @@ func nodeFullText(node *ast.Node) string {
 	return text[pos:end]
 }
 
-// synthesizedSymbols records identifier→symbol mappings produced by the
+// SynthesizedSymbols records identifier→symbol mappings produced by the
 // nodebuilder when types are converted back to synthesized type nodes.
 // The TypeScript implementation reads `node.symbol` on such nodes; the
 // typescript-go nodebuilder instead reports the mapping through the
-// idToSymbol map passed to TypeToTypeNode. All TypeToTypeNode call sites
-// share this registry so TypeReferenceNodeParser can resolve names on
-// synthesized nodes.
-var synthesizedSymbols = map[*ast.IdentifierNode]*ast.Symbol{}
-
-// SynthesizedSymbol resolves a symbol recorded for a synthesized identifier.
-func synthesizedSymbol(id *ast.Node) *ast.Symbol {
-	return synthesizedSymbols[id]
+// idToSymbol map passed to TypeToTypeNode. One registry is shared by all
+// parsers of a chain (see factory.CreateParser) so TypeReferenceNodeParser
+// can resolve names on synthesized nodes; its lifetime is one generator,
+// which keeps runs independent. Not safe for concurrent use, like the rest
+// of the parsing pipeline.
+type SynthesizedSymbols struct {
+	m map[*ast.IdentifierNode]*ast.Symbol
 }
+
+func NewSynthesizedSymbols() *SynthesizedSymbols {
+	return &SynthesizedSymbols{m: map[*ast.IdentifierNode]*ast.Symbol{}}
+}
+
+// Map exposes the underlying map for TypeToTypeNode's idToSymbol parameter.
+func (s *SynthesizedSymbols) Map() map[*ast.IdentifierNode]*ast.Symbol { return s.m }
+
+// Lookup resolves a symbol recorded for a synthesized identifier.
+func (s *SynthesizedSymbols) Lookup(id *ast.Node) *ast.Symbol { return s.m[id] }

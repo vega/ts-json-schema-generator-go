@@ -14,10 +14,11 @@ import (
 type ObjectLiteralExpressionNodeParser struct {
 	childNodeParser NodeParser
 	checker         *checker.Checker
+	synth           *SynthesizedSymbols
 }
 
-func NewObjectLiteralExpressionNodeParser(childNodeParser NodeParser, typeChecker *checker.Checker) *ObjectLiteralExpressionNodeParser {
-	return &ObjectLiteralExpressionNodeParser{childNodeParser: childNodeParser, checker: typeChecker}
+func NewObjectLiteralExpressionNodeParser(childNodeParser NodeParser, typeChecker *checker.Checker, synth *SynthesizedSymbols) *ObjectLiteralExpressionNodeParser {
+	return &ObjectLiteralExpressionNodeParser{childNodeParser: childNodeParser, checker: typeChecker, synth: synth}
 }
 
 func (p *ObjectLiteralExpressionNodeParser) SupportsNode(node *ast.Node) bool {
@@ -49,7 +50,7 @@ func (p *ObjectLiteralExpressionNodeParser) CreateType(node *ast.Node, context *
 			p.checker.GetTypeAtLocation(spread.AsSpreadAssignment().Expression),
 			nil,
 			nodeBuilderFlagsNoTruncation,
-			synthesizedSymbols,
+			p.synth.Map(),
 		)
 		if referenced == nil {
 			panic(fmt.Errorf("could not find reference for spread type %s", DescribeNode(spread)))
@@ -84,7 +85,7 @@ func (p *ObjectLiteralExpressionNodeParser) parseProperties(properties []*ast.No
 				p.checker.GetTypeAtLocation(prop),
 				nil,
 				nodeBuilderFlagsNoTruncation,
-				synthesizedSymbols,
+				p.synth.Map(),
 			)
 		case ast.IsPropertyAssignment(prop):
 			typeNode = prop.AsPropertyAssignment().Initializer

@@ -1,0 +1,37 @@
+name: Bump typescript-go
+
+on:
+  schedule:
+    - cron: "17 6 * * 1" # weekly, Monday morning UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Bump typescript-go to latest main
+        run: tools/bump-tsgo.sh main
+      - name: Test against the fixture oracle
+        run: go test ./...
+      - uses: peter-evans/create-pull-request@v7
+        with:
+          branch: bump-typescript-go
+          title: "Bump typescript-go to latest main"
+          commit-message: "chore: bump typescript-go and regenerate shims"
+          body: |
+            Automated weekly bump of the pinned typescript-go version, with
+            shims regenerated. The full fixture suite (251 golden schemas,
+            vega-lite, mosaic) passed against the new compiler before this
+            PR was opened.

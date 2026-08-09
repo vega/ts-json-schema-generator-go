@@ -64,7 +64,10 @@ func (p *StringTemplateLiteralNodeParser) CreateType(node *ast.Node, ctx *Contex
 // on non-literal types.
 func tryExtractLiterals(t types.Type) (literals []string, ok bool) {
 	defer func() {
-		if recover() != nil {
+		if r := recover(); r != nil {
+			if _, expected := r.(*types.UnknownLiteralTypeError); !expected {
+				panic(r)
+			}
 			literals = nil
 			ok = false
 		}

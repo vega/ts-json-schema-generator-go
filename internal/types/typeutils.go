@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -47,8 +48,19 @@ func RemoveUndefined(propertyType *UnionType) (numRemoved int, newType Type) {
 	}
 }
 
+// UnknownLiteralTypeError reports a type that cannot be reduced to literals,
+// mirroring UnknownTypeError in the TypeScript implementation.
+type UnknownLiteralTypeError struct {
+	Type Type
+}
+
+func (e *UnknownLiteralTypeError) Error() string {
+	return fmt.Sprintf("unknown type %T while extracting literals", e.Type)
+}
+
 // ExtractLiterals collects the string forms of all literals in a type
-// (src/Utils/extractLiterals.ts). Panics with an error on non-literal types.
+// (src/Utils/extractLiterals.ts). Panics with *UnknownLiteralTypeError on
+// non-literal types.
 func ExtractLiterals(t Type) []string {
 	var out []string
 	extractLiterals(t, &out)
@@ -77,7 +89,7 @@ func extractLiterals(t Type, out *[]string) {
 	case *BooleanType:
 		*out = append(*out, "true", "false")
 	default:
-		panic(fmt.Errorf("unknown type %T while extracting literals", d))
+		panic(&UnknownLiteralTypeError{Type: d})
 	}
 }
 
@@ -178,7 +190,7 @@ func Translate(memberTypes []Type) Type {
 
 	switch len(result) {
 	case 0:
-		panic(fmt.Errorf("could not translate intersection to union"))
+		panic(errors.New("could not translate intersection to union"))
 	case 1:
 		return result[0]
 	default:

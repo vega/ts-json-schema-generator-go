@@ -86,7 +86,7 @@ func (p *CircularReferenceNodeParser) CreateType(node *ast.Node, ctx *Context, _
 	if cached, ok := p.circular[key]; ok {
 		return cached
 	}
-	reference := &types.ReferenceType{}
+	reference := types.NewReferenceType()
 	p.circular[key] = reference
 	typ := p.child.CreateType(node, ctx, reference)
 	if typ != nil {

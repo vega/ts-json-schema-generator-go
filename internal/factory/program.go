@@ -5,6 +5,7 @@ package factory
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -52,7 +53,7 @@ func CreateProgram(cfg *config.Config) (*compiler.Program, *checker.Checker, fun
 		rootNames = parsed.FileNames()
 	}
 	if len(rootNames) == 0 {
-		return nil, nil, nil, fmt.Errorf("No input files")
+		return nil, nil, nil, errors.New("no input files")
 	}
 
 	// The program takes its root files from the ParsedCommandLine; rebuild it

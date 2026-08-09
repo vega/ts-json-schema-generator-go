@@ -13,21 +13,24 @@ import (
 // draft-07 that the generator emits; anything else (JSDoc annotations such
 // as description, default, examples, ...) lives in Extra.
 //
+// Definition is marshal-only: MarshalJSON below controls emission order and
+// omission entirely (struct tags would be ignored and are omitted).
+//
 // Several fields are typed `any` because JSON Schema allows alternatives:
 //   - Type: string or []string
 //   - Items: *Definition or []*Definition
 //   - AdditionalProperties / AdditionalItems: bool or *Definition
 //   - Const / Default / Enum members: any JSON value
 type Definition struct {
-	ID                   string `json:"$id,omitempty"`
-	Schema               string `json:"$schema,omitempty"`
-	Ref                  string `json:"$ref,omitempty"`
-	Comment              string `json:"$comment,omitempty"`
-	Title                string `json:"title,omitempty"`
-	Type                 any    `json:"type,omitempty"`
-	Format               string `json:"format,omitempty"`
-	Enum                 []any  `json:"enum,omitempty"`
-	Const                *any   `json:"const,omitempty"`
+	ID                   string
+	Schema               string
+	Ref                  string
+	Comment              string
+	Title                string
+	Type                 any
+	Format               string
+	Enum                 []any
+	Const                *any
 	Not                  *Definition
 	AllOf                []*Definition
 	AnyOf                []*Definition
@@ -191,7 +194,7 @@ func (d *Definition) MarshalJSON() ([]byte, error) {
 		{"minItems", d.MinItems, d.MinItems != nil},
 		{"maxItems", d.MaxItems, d.MaxItems != nil},
 		{"additionalItems", d.AdditionalItems, d.AdditionalItems != nil},
-		{"properties", d.Properties, d.Properties.Len() > 0},
+		{"properties", d.Properties, d.Properties != nil},
 		{"required", d.Required, len(d.Required) > 0},
 		{"additionalProperties", d.AdditionalProperties, d.AdditionalProperties != nil},
 		{"patternProperties", sortedMap(d.PatternProperties), d.PatternProperties != nil},

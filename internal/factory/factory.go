@@ -14,7 +14,8 @@ func CreateGenerator(cfg *config.Config) (*generator.SchemaGenerator, func(), er
 	}
 	program, chk, release, err := CreateProgram(cfg)
 	if err != nil {
-		return nil, nil, err
+		// Return a usable no-op release so callers can defer unconditionally.
+		return nil, func() {}, err
 	}
 	nodeParser := CreateParser(program, chk, cfg)
 	typeFormatter := CreateFormatter(cfg)

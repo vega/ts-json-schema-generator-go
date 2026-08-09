@@ -29,10 +29,11 @@ func firstValidDeclaration(declarations []*ast.Node) *ast.Node {
 type TypeReferenceNodeParser struct {
 	typeChecker     *checker.Checker
 	childNodeParser NodeParser
+	synth           *SynthesizedSymbols
 }
 
-func NewTypeReferenceNodeParser(typeChecker *checker.Checker, childNodeParser NodeParser) *TypeReferenceNodeParser {
-	return &TypeReferenceNodeParser{typeChecker: typeChecker, childNodeParser: childNodeParser}
+func NewTypeReferenceNodeParser(typeChecker *checker.Checker, childNodeParser NodeParser, synth *SynthesizedSymbols) *TypeReferenceNodeParser {
+	return &TypeReferenceNodeParser{typeChecker: typeChecker, childNodeParser: childNodeParser, synth: synth}
 }
 
 func (p *TypeReferenceNodeParser) SupportsNode(node *ast.Node) bool {
@@ -50,7 +51,7 @@ func (p *TypeReferenceNodeParser) CreateType(node *ast.Node, ctx *Context, _ *ty
 		// registry (the TypeScript factory sets node.symbol instead).
 		typeSymbol = tsutils.SymbolAtNode(typeName)
 		if typeSymbol == nil {
-			typeSymbol = synthesizedSymbol(typeName)
+			typeSymbol = p.synth.Lookup(typeName)
 		}
 	}
 	if typeSymbol == nil {

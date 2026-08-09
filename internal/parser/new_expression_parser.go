@@ -12,10 +12,11 @@ import (
 type NewExpressionParser struct {
 	typeChecker     *checker.Checker
 	childNodeParser NodeParser
+	synth           *SynthesizedSymbols
 }
 
-func NewNewExpressionParser(typeChecker *checker.Checker, childNodeParser NodeParser) *NewExpressionParser {
-	return &NewExpressionParser{typeChecker: typeChecker, childNodeParser: childNodeParser}
+func NewNewExpressionParser(typeChecker *checker.Checker, childNodeParser NodeParser, synth *SynthesizedSymbols) *NewExpressionParser {
+	return &NewExpressionParser{typeChecker: typeChecker, childNodeParser: childNodeParser, synth: synth}
 }
 
 func (p *NewExpressionParser) SupportsNode(node *ast.Node) bool {
@@ -30,7 +31,7 @@ func (p *NewExpressionParser) CreateType(node *ast.Node, context *Context, _ *ty
 		symbol = t.Alias().Symbol()
 	}
 
-	decl := p.typeChecker.TypeToTypeNode(t, node, nodeBuilderFlagsIgnoreErrors, synthesizedSymbols)
+	decl := p.typeChecker.TypeToTypeNode(t, node, nodeBuilderFlagsIgnoreErrors, p.synth.Map())
 	if decl == nil && symbol != nil {
 		decl = symbol.ValueDeclaration
 		if decl == nil && len(symbol.Declarations) > 0 {

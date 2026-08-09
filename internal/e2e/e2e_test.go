@@ -36,24 +36,6 @@ func repoRoot(t *testing.T) string {
 	return filepath.Dir(filepath.Dir(filepath.Dir(file)))
 }
 
-// wiringPending reports whether the parser/formatter factories are still
-// integration stubs. It probes CreateFormatter, which panics with a known
-// message until the full chain is wired; once the stubs are removed this
-// returns false and the fixtures run for real.
-func wiringPending() (pending bool) {
-	defer func() {
-		if r := recover(); r != nil {
-			if fmt.Sprintf("%v", r) == "wiring completed at integration" {
-				pending = true
-				return
-			}
-			panic(r)
-		}
-	}()
-	factory.CreateFormatter(config.Default())
-	return false
-}
-
 // TestMain switches the working directory to the repo root so that node-key
 // hashes (which embed cwd-relative filenames, matching the TypeScript
 // implementation's use of process.cwd()) agree with the golden schemas that
@@ -80,10 +62,6 @@ func TestValidData(t *testing.T) {
 	var manifest []manifestEntry
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		t.Fatalf("cannot parse fixtures manifest: %v", err)
-	}
-
-	if wiringPending() {
-		t.Skip("wiring pending: factory.CreateParser/CreateFormatter are stubs")
 	}
 
 	seen := map[string]int{}

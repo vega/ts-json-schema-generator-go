@@ -13,10 +13,11 @@ import (
 type CallExpressionParser struct {
 	typeChecker     *checker.Checker
 	childNodeParser NodeParser
+	synth           *SynthesizedSymbols
 }
 
-func NewCallExpressionParser(typeChecker *checker.Checker, childNodeParser NodeParser) *CallExpressionParser {
-	return &CallExpressionParser{typeChecker: typeChecker, childNodeParser: childNodeParser}
+func NewCallExpressionParser(typeChecker *checker.Checker, childNodeParser NodeParser, synth *SynthesizedSymbols) *CallExpressionParser {
+	return &CallExpressionParser{typeChecker: typeChecker, childNodeParser: childNodeParser, synth: synth}
 }
 
 func (p *CallExpressionParser) SupportsNode(node *ast.Node) bool {
@@ -58,7 +59,7 @@ func (p *CallExpressionParser) CreateType(node *ast.Node, context *Context, _ *t
 	// the original type. Using the type checker to synthesize the actual
 	// return type is a better approach than back-referencing generic types
 	// by parameter index.
-	decl := p.typeChecker.TypeToTypeNode(t, node, nodeBuilderFlagsIgnoreErrors, synthesizedSymbols)
+	decl := p.typeChecker.TypeToTypeNode(t, node, nodeBuilderFlagsIgnoreErrors, p.synth.Map())
 	if decl == nil && symbol != nil {
 		decl = symbol.ValueDeclaration
 		if decl == nil && len(symbol.Declarations) > 0 {

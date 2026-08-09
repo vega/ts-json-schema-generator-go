@@ -3,8 +3,11 @@
 package generator
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"runtime"
+	"runtime/debug"
 	"slices"
 	"strings"
 
@@ -22,7 +25,7 @@ import (
 
 type SchemaGenerator struct {
 	program       *compiler.Program
-	checker       *checker.Checker
+	typeChecker   *checker.Checker
 	nodeParser    parser.NodeParser
 	typeFormatter formatter.TypeFormatter
 	config        *config.Config
@@ -40,7 +43,7 @@ func NewSchemaGenerator(
 	}
 	return &SchemaGenerator{
 		program:       program,
-		checker:       typeChecker,
+		typeChecker:   typeChecker,
 		nodeParser:    nodeParser,
 		typeFormatter: typeFormatter,
 		config:        cfg,
@@ -54,11 +57,16 @@ func (g *SchemaGenerator) CreateSchema(fullNames []string) (result *schema.Defin
 	if os.Getenv("TSJSG_DEBUG_PANIC") == "" {
 		defer func() {
 			if r := recover(); r != nil {
-				if e, ok := r.(error); ok {
+				switch e := r.(type) {
+				case runtime.Error:
+					// A real bug, not a schema diagnostic: keep the stack
+					// so it is debuggable from the returned error.
+					err = fmt.Errorf("internal error: %v\n%s", e, debug.Stack())
+				case error:
 					err = e
-					return
+				default:
+					err = fmt.Errorf("%v", r)
 				}
-				err = fmt.Errorf("%v", r)
 			}
 		}()
 	}
@@ -155,7 +163,7 @@ func (g *SchemaGenerator) appendRootChildDefinitions(rootType types.Type, childD
 func (g *SchemaGenerator) rootNodes(fullNames []string) ([]*ast.Node, error) {
 	star := slices.Contains(fullNames, "*")
 	if star && len(fullNames) > 1 {
-		return nil, fmt.Errorf("cannot mix '*' with specific type names")
+		return nil, errors.New("cannot mix '*' with specific type names")
 	}
 	generateAll := len(fullNames) == 0 || star
 
@@ -238,14 +246,14 @@ func (g *SchemaGenerator) inspectNode(node *ast.Node, allTypes *orderedNodeMap) 
 		return
 
 	case ast.KindExportSpecifier:
-		symbol := g.checker.GetExportSpecifierLocalTargetSymbol(node)
+		symbol := g.typeChecker.GetExportSpecifierLocalTargetSymbol(node)
 		if symbol == nil || len(symbol.Declarations) != 1 {
 			return
 		}
 		declaration := symbol.Declarations[0]
 		if declaration.Kind == ast.KindImportSpecifier {
 			// `import { Foo } from "./lib"; export { Foo };`
-			typ := g.checker.GetTypeAtLocation(declaration)
+			typ := g.typeChecker.GetTypeAtLocation(declaration)
 			if typ != nil {
 				if typeSymbol := checker.Type_symbol(typ); typeSymbol != nil && len(typeSymbol.Declarations) == 1 {
 					g.inspectNode(typeSymbol.Declarations[0], allTypes)
@@ -271,16 +279,16 @@ func (g *SchemaGenerator) inspectNode(node *ast.Node, allTypes *orderedNodeMap) 
 			return
 		}
 		// export * from './lib'
-		symbol := g.checker.GetSymbolAtLocation(decl.ModuleSpecifier)
+		symbol := g.typeChecker.GetSymbolAtLocation(decl.ModuleSpecifier)
 		if symbol == nil {
 			return
 		}
 		for _, source := range symbol.Declarations {
-			sourceSymbol := g.checker.GetSymbolAtLocation(source)
+			sourceSymbol := g.typeChecker.GetSymbolAtLocation(source)
 			if sourceSymbol == nil {
 				return
 			}
-			for _, moduleExport := range g.checker.GetExportsOfModule(sourceSymbol) {
+			for _, moduleExport := range g.typeChecker.GetExportsOfModule(sourceSymbol) {
 				nodes := moduleExport.Declarations
 				if len(nodes) == 0 && moduleExport.ValueDeclaration != nil {
 					nodes = []*ast.Node{moduleExport.ValueDeclaration}
@@ -319,7 +327,7 @@ func isGenericType(node *ast.Node) bool {
 }
 
 func (g *SchemaGenerator) fullName(node *ast.Node) string {
-	name := checker.Checker_getFullyQualifiedName(g.checker, tsutils.SymbolAtNode(node), nil)
+	name := checker.Checker_getFullyQualifiedName(g.typeChecker, tsutils.SymbolAtNode(node), nil)
 	if idx := strings.Index(name, `".`); strings.HasPrefix(name, `"`) && idx >= 0 {
 		name = name[idx+2:]
 	}

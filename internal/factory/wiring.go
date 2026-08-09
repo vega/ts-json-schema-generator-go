@@ -15,6 +15,7 @@ import (
 // CreateParser assembles the node parser chain (factory/parser.ts).
 func CreateParser(program *compiler.Program, chk *checker.Checker, cfg *config.Config) parser.NodeParser {
 	chain := parser.NewChainNodeParser(chk, nil)
+	synth := parser.NewSynthesizedSymbols()
 
 	extraTags := make(map[string]bool, len(cfg.ExtraTags))
 	for _, tag := range cfg.ExtraTags {
@@ -60,13 +61,13 @@ func CreateParser(program *compiler.Program, chk *checker.Checker, cfg *config.C
 		AddNodeParser(parser.NewNumberLiteralNodeParser()).
 		AddNodeParser(parser.NewBooleanLiteralNodeParser()).
 		AddNodeParser(parser.NewNullLiteralNodeParser()).
-		AddNodeParser(parser.NewObjectLiteralExpressionNodeParser(chain, chk)).
+		AddNodeParser(parser.NewObjectLiteralExpressionNodeParser(chain, chk, synth)).
 		AddNodeParser(parser.NewArrayLiteralExpressionNodeParser(chain)).
 		AddNodeParser(parser.NewPrefixUnaryExpressionNodeParser(chain)).
 		AddNodeParser(parser.NewLiteralNodeParser(chain)).
 		AddNodeParser(parser.NewParenthesizedNodeParser(chain)).
-		AddNodeParser(parser.NewPromiseNodeParser(chk, chain)).
-		AddNodeParser(parser.NewTypeReferenceNodeParser(chk, chain)).
+		AddNodeParser(parser.NewPromiseNodeParser(chk, chain, synth)).
+		AddNodeParser(parser.NewTypeReferenceNodeParser(chk, chain, synth)).
 		AddNodeParser(parser.NewImportTypeNodeParser(chk, chain)).
 		AddNodeParser(parser.NewExpressionWithTypeArgumentsNodeParser(chk, chain)).
 		AddNodeParser(parser.NewIndexedAccessTypeNodeParser(chk, withJsDoc(chain))).
@@ -83,13 +84,13 @@ func CreateParser(program *compiler.Program, chk *checker.Checker, cfg *config.C
 		AddNodeParser(parser.NewRestTypeNodeParser(chain)).
 		AddNodeParser(parser.NewIdentifierNodeParser(chain, chk)).
 		AddNodeParser(parser.NewSpreadElementNodeParser(chain)).
-		AddNodeParser(parser.NewCallExpressionParser(chk, chain)).
-		AddNodeParser(parser.NewNewExpressionParser(chk, chain)).
+		AddNodeParser(parser.NewCallExpressionParser(chk, chain, synth)).
+		AddNodeParser(parser.NewNewExpressionParser(chk, chain, synth)).
 		AddNodeParser(parser.NewPropertyAccessExpressionParser(chk, chain)).
 		AddNodeParser(withCircular(withExpose(withJsDoc(parser.NewTypeAliasNodeParser(chk, chain))))).
 		AddNodeParser(withExpose(withJsDoc(parser.NewEnumNodeParser(chk)))).
 		AddNodeParser(withCircular(withExpose(withJsDoc(
-			parser.NewInterfaceAndClassNodeParser(chk, withJsDoc(chain), cfg.AdditionalProperties))))).
+			parser.NewInterfaceAndClassNodeParser(chk, withJsDoc(chain), cfg.AdditionalProperties, synth))))).
 		AddNodeParser(withCircular(withExpose(withJsDoc(
 			parser.NewTypeLiteralNodeParser(chk, withJsDoc(chain), cfg.AdditionalProperties))))).
 		AddNodeParser(parser.NewArrayNodeParser(chain))

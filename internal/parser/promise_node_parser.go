@@ -18,10 +18,11 @@ import (
 type PromiseNodeParser struct {
 	typeChecker     *checker.Checker
 	childNodeParser NodeParser
+	synth           *SynthesizedSymbols
 }
 
-func NewPromiseNodeParser(typeChecker *checker.Checker, childNodeParser NodeParser) *PromiseNodeParser {
-	return &PromiseNodeParser{typeChecker: typeChecker, childNodeParser: childNodeParser}
+func NewPromiseNodeParser(typeChecker *checker.Checker, childNodeParser NodeParser, synth *SynthesizedSymbols) *PromiseNodeParser {
+	return &PromiseNodeParser{typeChecker: typeChecker, childNodeParser: childNodeParser, synth: synth}
 }
 
 func (p *PromiseNodeParser) SupportsNode(node *ast.Node) bool {
@@ -57,7 +58,7 @@ func (p *PromiseNodeParser) SupportsNode(node *ast.Node) bool {
 func (p *PromiseNodeParser) CreateType(node *ast.Node, context *Context, _ *types.ReferenceType) types.Type {
 	t := p.typeChecker.GetTypeAtLocation(node)
 	awaitedType := checker.Checker_getAwaitedType(p.typeChecker, t)
-	awaitedNode := p.typeChecker.TypeToTypeNode(awaitedType, nil, nodeBuilderFlagsIgnoreErrors, synthesizedSymbols)
+	awaitedNode := p.typeChecker.TypeToTypeNode(awaitedType, nil, nodeBuilderFlagsIgnoreErrors, p.synth.Map())
 
 	if awaitedNode == nil {
 		panic(fmt.Errorf("could not find awaited node %s", DescribeNode(node)))

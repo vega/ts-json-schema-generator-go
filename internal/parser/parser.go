@@ -8,7 +8,6 @@ package parser
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"strings"
 	"sync"
@@ -115,9 +114,12 @@ func GetNodeKey(node *ast.Node, ctx *Context) string {
 	for node != nil {
 		source := ast.GetSourceFileOfNode(node)
 		if source == nil {
-			// Sourceless nodes have no stable identity; a random component
-			// prevents collisions, matching the TypeScript implementation.
-			ids = append(ids, fmt.Sprintf("%v", rand.Float64()))
+			// Sourceless (synthesized) nodes have no positions to build an
+			// identity from. The TypeScript implementation uses Math.random()
+			// here, which defeats caching and would leak nondeterminism into
+			// definition ids; the node's address is equally unique but stable
+			// for the lifetime of the run.
+			ids = append(ids, fmt.Sprintf("%p", node))
 		} else {
 			filename := source.FileName()
 			if cwd := baseDir(); cwd != "" && strings.HasPrefix(filename, cwd+"/") {

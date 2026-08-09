@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"unicode/utf8"
 
@@ -61,7 +62,7 @@ func (p *IntrinsicNodeParser) CreateType(node *ast.Node, ctx *Context, _ *types.
 func getIntrinsicParentName(node *ast.Node) string {
 	parent := node.Parent
 	if parent == nil || !ast.IsTypeAliasDeclaration(parent) {
-		panic(fmt.Errorf("only intrinsics part of a TypeAliasDeclaration are supported"))
+		panic(errors.New("only intrinsics part of a TypeAliasDeclaration are supported"))
 	}
 	return parent.AsTypeAliasDeclaration().Name().Text()
 }
@@ -83,7 +84,7 @@ func jsToLowerCase(v string) string { return lowerCaser.String(v) }
 // TypeScript implementation.
 func jsChangeFirstCase(v string, mapCase func(string) string) string {
 	if v == "" {
-		panic(fmt.Errorf("cannot capitalize an empty string"))
+		panic(errors.New("cannot capitalize an empty string"))
 	}
 	first, size := utf8.DecodeRuneInString(v)
 	if first > 0xFFFF {

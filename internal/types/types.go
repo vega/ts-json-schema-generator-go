@@ -4,6 +4,7 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -401,15 +402,20 @@ func (t *DefinitionType) Name() string {
 }
 
 // ReferenceType is a lazily-resolved reference used to break circular types.
+// It is initialized in two phases: created empty by NewReferenceType while a
+// circular node is being parsed, then completed via SetType; ID/Name/Type
+// panic until then.
 type ReferenceType struct {
 	typ  Type
 	id   string
 	name string
 }
 
+func NewReferenceType() *ReferenceType { return &ReferenceType{} }
+
 func (t *ReferenceType) ID() string {
 	if t.id == "" {
-		panic(fmt.Errorf("reference type ID not set yet"))
+		panic(errors.New("reference type ID not set yet"))
 	}
 	return t.id
 }
@@ -418,7 +424,7 @@ func (t *ReferenceType) SetID(id string) { t.id = id }
 
 func (t *ReferenceType) Name() string {
 	if t.name == "" {
-		panic(fmt.Errorf("reference type name not set yet"))
+		panic(errors.New("reference type name not set yet"))
 	}
 	return t.name
 }
@@ -427,7 +433,7 @@ func (t *ReferenceType) SetName(name string) { t.name = name }
 
 func (t *ReferenceType) Type() Type {
 	if t.typ == nil {
-		panic(fmt.Errorf("reference type not set yet"))
+		panic(errors.New("reference type not set yet"))
 	}
 	return t.typ
 }

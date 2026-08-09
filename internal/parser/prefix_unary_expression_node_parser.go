@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -42,7 +43,7 @@ func (p *PrefixUnaryExpressionNodeParser) CreateType(node *ast.Node, ctx *Contex
 			return &types.LiteralType{Value: !jsToBoolean(literal.Value)}
 		}
 
-		panic(fmt.Errorf("unsupported prefix unary operator"))
+		panic(errors.New("unsupported prefix unary operator"))
 	}
 
 	panic(fmt.Errorf("expected operand to be \"LiteralType\" but is %q", typeConstructorName(operand)))

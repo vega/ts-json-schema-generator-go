@@ -14,13 +14,15 @@ type InterfaceAndClassNodeParser struct {
 	typeChecker          *checker.Checker
 	childNodeParser      NodeParser
 	additionalProperties bool
+	synth                *SynthesizedSymbols
 }
 
-func NewInterfaceAndClassNodeParser(typeChecker *checker.Checker, childNodeParser NodeParser, additionalProperties bool) *InterfaceAndClassNodeParser {
+func NewInterfaceAndClassNodeParser(typeChecker *checker.Checker, childNodeParser NodeParser, additionalProperties bool, synth *SynthesizedSymbols) *InterfaceAndClassNodeParser {
 	return &InterfaceAndClassNodeParser{
 		typeChecker:          typeChecker,
 		childNodeParser:      childNodeParser,
 		additionalProperties: additionalProperties,
+		synth:                synth,
 	}
 }
 
@@ -130,7 +132,7 @@ func (p *InterfaceAndClassNodeParser) getProperties(node *ast.Node, context *Con
 		// Ignore members without an initializer; they have no useful type.
 		if memberType == nil && member.Initializer() != nil {
 			t := p.typeChecker.GetTypeAtLocation(member)
-			memberType = p.typeChecker.TypeToTypeNode(t, node, nodeBuilderFlagsNoTruncation, synthesizedSymbols)
+			memberType = p.typeChecker.TypeToTypeNode(t, node, nodeBuilderFlagsNoTruncation, p.synth.Map())
 
 			// TypeToTypeNode returns a node that is detached from the AST, so
 			// AnnotatedNodeParser cannot walk up to the member to read its
