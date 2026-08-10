@@ -21,16 +21,17 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
-      - name: Bump typescript-go to latest main
-        run: tools/bump-tsgo.sh main
+      - name: Bump typescript-go to the latest TypeScript release tag
+        run: tools/bump-tsgo.sh
       - name: Test against the fixture oracle
         run: go test ./...
       - uses: peter-evans/create-pull-request@v8
         with:
           branch: bump-typescript-go
-          title: "Bump typescript-go to latest main"
+          title: "Bump typescript-go to the latest TypeScript release"
           commit-message: "chore: bump typescript-go and regenerate shims"
           body: |
-            Automated weekly bump of the pinned typescript-go version, with
-            shims regenerated. CI runs the fixture suite (golden schemas,
-            vega-lite, mosaic) against the new compiler.
+            Automated weekly bump of the pinned typescript-go version to the
+            latest TypeScript release tag, with shims regenerated. CI runs
+            the fixture suite (golden schemas, vega-lite, mosaic) against
+            the new compiler.

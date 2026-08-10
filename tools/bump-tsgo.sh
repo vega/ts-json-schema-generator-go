@@ -2,13 +2,30 @@
 # Bump the pinned typescript-go version and regenerate the shim layer.
 #
 # Usage: tools/bump-tsgo.sh [ref]
-#   ref: a typescript-go branch, tag, or commit (default: main)
+#   ref: a typescript-go branch, tag, or commit
+#        (default: the latest TypeScript release tag, typescript/v*)
 #
 # The fixture suite is the compatibility oracle — run `go test ./...` after.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-ref="${1:-main}"
+ref="${1:-}"
+if [ -z "$ref" ]; then
+    # Module queries reject refs containing slashes, so resolve the newest
+    # typescript/v* release tag to its commit (preferring the peeled entry
+    # of the annotated tag).
+    tags=$(git ls-remote --tags https://github.com/microsoft/typescript-go 'typescript/v*')
+    tag=$(printf '%s\n' "$tags" | sed 's|.*refs/tags/||; s|\^{}$||' | sort -u -V | tail -1)
+    ref=$(printf '%s\n' "$tags" | grep -F "refs/tags/${tag}^{}" | cut -f1 || true)
+    if [ -z "$ref" ]; then
+        ref=$(printf '%s\n' "$tags" | grep -F "refs/tags/${tag}" | head -1 | cut -f1 || true)
+    fi
+    if [ -z "$ref" ]; then
+        echo "could not resolve a typescript/v* release tag" >&2
+        exit 1
+    fi
+    echo "Latest release: ${tag} (${ref})"
+fi
 
 echo "Resolving github.com/microsoft/typescript-go@${ref}..."
 version=$(go list -m -json "github.com/microsoft/typescript-go@${ref}" | go run ./tools/internal/jsonfield Version)
@@ -20,6 +37,8 @@ for mod in shim/*/go.mod shim/vfs/*/go.mod; do
     (cd "$dir" && go mod edit -require="github.com/microsoft/typescript-go@${version}" && go mod tidy >/dev/null)
 done
 
+# tidy alone never downgrades the root requirement, so pin it explicitly.
+go mod edit -require="github.com/microsoft/typescript-go@${version}"
 go mod tidy
 echo "Regenerating shims..."
 go run ./tools/gen_shims
