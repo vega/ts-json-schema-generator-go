@@ -113,6 +113,16 @@ func NewTopRefNodeParser(child NodeParser, fullName string, topRef bool) *TopRef
 	return &TopRefNodeParser{child: child, fullName: fullName, topRef: topRef}
 }
 
+// SetFullName renames the top-level definition for subsequent CreateType
+// calls. It has no counterpart in the reference implementation, whose Config
+// carries a single type name fixed at construction; the CLI's --outdir mode
+// generates one named type at a time from a shared chain and renames between
+// them. Only the wrapper is affected: the child chain's caches are untouched,
+// and CreateType builds a fresh DefinitionType each time.
+func (p *TopRefNodeParser) SetFullName(fullName string) {
+	p.fullName = fullName
+}
+
 func (p *TopRefNodeParser) CreateType(node *ast.Node, ctx *Context, _ *types.ReferenceType) types.Type {
 	baseType := p.child.CreateType(node, ctx, nil)
 	def, isDef := baseType.(*types.DefinitionType)

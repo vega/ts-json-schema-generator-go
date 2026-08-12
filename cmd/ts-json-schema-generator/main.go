@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/vega/ts-json-schema-generator-go/internal/config"
 	"github.com/vega/ts-json-schema-generator-go/internal/factory"
+	"github.com/vega/ts-json-schema-generator-go/internal/generator"
 	"github.com/vega/ts-json-schema-generator-go/internal/schema"
 )
 
@@ -57,6 +59,7 @@ func run(args []string) error {
 		noTypeCheck        bool
 		noRefEncode        bool
 		out                string
+		outdir             string
 		validationKeywords stringList
 		additionalProps    bool
 		showVersion        bool
@@ -64,7 +67,7 @@ func run(args []string) error {
 
 	flags.StringVar(&path, "path", "", "Source file path (glob; supports * and **)")
 	flags.StringVar(&path, "p", "", "Alias for --path")
-	flags.Var(&types, "type", "Type name(s); repeatable or comma-separated ('*' for all)")
+	flags.Var(&types, "type", "Type name; repeat the flag for multiple types ('*' for all)")
 	flags.Var(&types, "t", "Alias for --type")
 	flags.StringVar(&id, "id", "", "$id for generated schema")
 	flags.StringVar(&id, "i", "", "Alias for --id")
@@ -85,6 +88,7 @@ func run(args []string) error {
 	flags.BoolVar(&noRefEncode, "no-ref-encode", false, "Do not encode references")
 	flags.StringVar(&out, "out", "", "Set the output file (default: stdout)")
 	flags.StringVar(&out, "o", "", "Alias for --out")
+	flags.StringVar(&outdir, "outdir", "", "Write one schema file per --type to <dir>/<type>.schema.json (parses the sources once)")
 	flags.Var(&validationKeywords, "validation-keywords", "Provide additional validation keywords to include; repeatable")
 	flags.BoolVar(&additionalProps, "additional-properties", false, "Allow additional properties for objects with no index signature")
 	flags.BoolVar(&showVersion, "version", false, "Print the version and exit")
@@ -109,6 +113,19 @@ func run(args []string) error {
 	}
 	if err := validateChoice("functions", functions, "fail", "comment", "hide"); err != nil {
 		return err
+	}
+	// Checked via Visit rather than a non-empty value so that an explicit
+	// --outdir "" is an error instead of silently falling back to stdout.
+	outdirSet := false
+	flags.Visit(func(f *flag.Flag) {
+		if f.Name == "outdir" {
+			outdirSet = true
+		}
+	})
+	if outdirSet {
+		if err := validateOutdirFlags(outdir, out, types); err != nil {
+			return err
+		}
 	}
 
 	// --markdown-description and --full-description imply --jsDoc extended.
@@ -143,35 +160,96 @@ func run(args []string) error {
 		Functions:            config.FunctionOptions(functions),
 	}
 
-	generator, release, err := factory.CreateGenerator(cfg)
+	gen, release, err := factory.CreateGenerator(cfg)
 	if err != nil {
 		return err
 	}
 	defer release()
 
-	generated, err := generator.CreateSchema(cfg.Types)
-	if err != nil {
-		return err
-	}
-
-	output, err := schema.MarshalStable(generated, cfg.SortProps, cfg.Minify)
-	if err != nil {
-		return err
-	}
-	// Match the reference CLI byte-for-byte: writeFileSync adds no newline,
-	// while the stdout path is console.log(schemaString + "\n").
-	output = bytes.TrimRight(output, "\n")
-
-	if out != "" {
-		if dir := filepath.Dir(out); dir != "" {
-			if err := os.MkdirAll(dir, 0o755); err != nil {
+	// One schema file per type, all sharing the program built above: loading,
+	// parsing and type-checking the project happen once for the whole set and
+	// only the per-type schema walk repeats.
+	if outdir != "" {
+		for _, typeName := range cfg.Types {
+			// The chain was built for the whole --type list, so it does not
+			// know which single type each file is for.
+			gen.SetTopRefName(typeName)
+			output, err := generateSchema(gen, cfg, []string{typeName})
+			if err != nil {
+				return fmt.Errorf("generating schema for type %q: %w", typeName, err)
+			}
+			if err := writeSchemaFile(filepath.Join(outdir, typeName+".schema.json"), output); err != nil {
 				return err
 			}
 		}
-		return os.WriteFile(out, output, 0o644)
+		return nil
+	}
+
+	output, err := generateSchema(gen, cfg, cfg.Types)
+	if err != nil {
+		return err
+	}
+
+	if out != "" {
+		return writeSchemaFile(out, output)
 	}
 	_, err = os.Stdout.Write(output)
 	return err
+}
+
+func generateSchema(gen *generator.SchemaGenerator, cfg *config.Config, types []string) ([]byte, error) {
+	generated, err := gen.CreateSchema(types)
+	if err != nil {
+		return nil, err
+	}
+	output, err := schema.MarshalStable(generated, cfg.SortProps, cfg.Minify)
+	if err != nil {
+		return nil, err
+	}
+	// Match the reference CLI byte-for-byte: writeFileSync adds no newline,
+	// while the stdout path is console.log(schemaString + "\n").
+	return bytes.TrimRight(output, "\n"), nil
+}
+
+func writeSchemaFile(path string, output []byte) error {
+	if dir := filepath.Dir(path); dir != "" {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return err
+		}
+	}
+	return os.WriteFile(path, output, 0o644)
+}
+
+// validateOutdirFlags rejects the --outdir combinations whose per-type file
+// names would be ambiguous, missing, or unsafe. It runs before the sources are
+// parsed, so a mistake costs no compile time.
+func validateOutdirFlags(outdir, out string, types []string) error {
+	if outdir == "" {
+		return errors.New("--outdir needs a directory path")
+	}
+	if out != "" {
+		return errors.New("--out and --outdir are mutually exclusive")
+	}
+	if info, err := os.Stat(outdir); err == nil && !info.IsDir() {
+		return fmt.Errorf("--outdir %q exists and is not a directory", outdir)
+	}
+	if len(types) == 0 {
+		return errors.New("--outdir requires at least one --type: it writes one file per named type")
+	}
+	seen := make(map[string]bool, len(types))
+	for _, typeName := range types {
+		if typeName == "*" {
+			return errors.New("--outdir cannot be used with --type '*'; list the types explicitly")
+		}
+		if seen[typeName] {
+			return fmt.Errorf("duplicate --type %q: each type writes its own file under --outdir", typeName)
+		}
+		seen[typeName] = true
+		if typeName == "" || strings.ContainsAny(typeName, `/\`+"\x00") {
+			return fmt.Errorf("type %q cannot be used as a file name under --outdir: it must be non-empty and free of path separators and NUL bytes", typeName)
+		}
+	}
+	return nil
 }
 
 func validateChoice(name, value string, choices ...string) error {

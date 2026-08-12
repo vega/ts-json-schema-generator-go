@@ -127,6 +127,14 @@ Deliberate and documented in commit history:
    npm package wraps it with `generateSchema`/`generateSchemaSync` (config in,
    schema out), which cover config-only usage — `tsProgram` and the augmentors
    have no equivalent across a process boundary.
+6. The CLI adds `--outdir <dir>` (an extension; no equivalent in the reference
+   CLI): one `<type>.schema.json` per `--type`, all from a single parse. Each
+   file is byte-identical to the corresponding single-type `--out` run.
+   Supporting it adds `TopRefNodeParser.SetFullName` (and
+   `SchemaGenerator.SetTopRefName`), which `TopRefNodeParser.ts` has no need
+   for: upstream `Config.type` is one name fixed at construction, whereas here
+   one chain generates several named types in turn. Everything else about the
+   parser matches the reference — leave the constructor's name argument alone.
 
 ## Downstream regression tests
 

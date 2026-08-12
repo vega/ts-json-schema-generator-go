@@ -20,6 +20,14 @@ npx ts-json-schema-generator --path 'my/project/**/*.ts' --type 'My.Type.Name'
 
 The flags are the same as the 2.x CLI: `--path/-p`, `--type/-t`, `--tsconfig/-f`, `--id/-i`, `--expose/-e`, `--jsDoc/-j`, `--functions`, `--markdown-description`, `--full-description`, `--minify`, `--unstable`, `--strict-tuples`, `--no-top-ref`, `--no-type-check`, `--no-ref-encode`, `--additional-properties`, `--validation-keywords`, `--out/-o`. See [the options documentation](https://github.com/vega/ts-json-schema-generator#options) for what each one does.
 
+One flag is new in version 3: `--outdir <dir>` writes a separate `<dir>/<type>.schema.json` for every `--type`, parsing the sources once for the whole set instead of once per file.
+
+```bash
+npx ts-json-schema-generator --path 'src/**/*.ts' --outdir schemas --type Spec --type Config
+```
+
+Each file is exactly what that type's own `--out` run would have produced. `--outdir` cannot be combined with `--out`, and the types have to be listed explicitly (no `*`). Note that `--id` would then put the same `$id` on every file, which collides in resolvers that cache by `$id`. The programmatic API below is "config in, schema out" and has no `outdir` equivalent.
+
 ## Programmatic usage
 
 `generateSchema` takes the same options as the 2.x `Config` type and resolves with the parsed schema, so code that was "config in, schema out" migrates by swapping the call:
