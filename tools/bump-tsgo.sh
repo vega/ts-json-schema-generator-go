@@ -9,12 +9,18 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
+# The upstream compiler module. Override to track a fork, a repo move, or a
+# major-version path (…/v2).
+TSGO_MODULE="${TSGO_MODULE:-github.com/microsoft/typescript-go}"
+# Module paths with a major-version suffix don't name a git repo.
+tsgo_repo="https://${TSGO_MODULE%/v[0-9]*}"
+
 ref="${1:-}"
 if [ -z "$ref" ]; then
     # Module queries reject refs containing slashes, so resolve the newest
     # typescript/v* release tag to its commit (preferring the peeled entry
     # of the annotated tag).
-    tags=$(git ls-remote --tags https://github.com/microsoft/typescript-go 'typescript/v*')
+    tags=$(git ls-remote --tags "$tsgo_repo" 'typescript/v*')
     tag=$(printf '%s\n' "$tags" | sed 's|.*refs/tags/||; s|\^{}$||' | sort -u -V | tail -1)
     ref=$(printf '%s\n' "$tags" | grep -F "refs/tags/${tag}^{}" | cut -f1 || true)
     if [ -z "$ref" ]; then
@@ -27,18 +33,18 @@ if [ -z "$ref" ]; then
     echo "Latest release: ${tag} (${ref})"
 fi
 
-echo "Resolving github.com/microsoft/typescript-go@${ref}..."
-version=$(go list -m -json "github.com/microsoft/typescript-go@${ref}" | go run ./tools/internal/jsonfield Version)
+echo "Resolving ${TSGO_MODULE}@${ref}..."
+version=$(go list -m -json "${TSGO_MODULE}@${ref}" | go run ./tools/internal/jsonfield Version)
 echo "Pinning ${version}"
 
 for mod in shim/*/go.mod shim/vfs/*/go.mod; do
     [ -f "$mod" ] || continue
     dir=$(dirname "$mod")
-    (cd "$dir" && go mod edit -require="github.com/microsoft/typescript-go@${version}" && go mod tidy >/dev/null)
+    (cd "$dir" && go mod edit -require="${TSGO_MODULE}@${version}" && go mod tidy >/dev/null)
 done
 
 # tidy alone never downgrades the root requirement, so pin it explicitly.
-go mod edit -require="github.com/microsoft/typescript-go@${version}"
+go mod edit -require="${TSGO_MODULE}@${version}"
 go mod tidy
 echo "Regenerating shims..."
 go run ./tools/gen_shims

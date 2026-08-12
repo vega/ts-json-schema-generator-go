@@ -255,7 +255,7 @@ func (g *SchemaGenerator) inspectNode(node *ast.Node, allTypes *orderedNodeMap) 
 			// `import { Foo } from "./lib"; export { Foo };`
 			typ := g.typeChecker.GetTypeAtLocation(declaration)
 			if typ != nil {
-				if typeSymbol := checker.Type_symbol(typ); typeSymbol != nil && len(typeSymbol.Declarations) == 1 {
+				if typeSymbol := typ.Symbol(); typeSymbol != nil && len(typeSymbol.Declarations) == 1 {
 					g.inspectNode(typeSymbol.Declarations[0], allTypes)
 				}
 			}

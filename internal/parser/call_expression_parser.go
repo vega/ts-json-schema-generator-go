@@ -32,7 +32,7 @@ func (p *CallExpressionParser) CreateType(node *ast.Node, context *Context, _ *t
 	// reference whose first type argument is a union, and maps the union
 	// constituents to literal types.
 	if t != nil && t.Flags()&checker.TypeFlagsObject != 0 && t.ObjectFlags()&checker.ObjectFlagsReference != 0 {
-		typeArguments := checker.Checker_getTypeArguments(p.typeChecker, t)
+		typeArguments := p.typeChecker.GetTypeArguments(t)
 		if len(typeArguments) > 0 && typeArguments[0] != nil &&
 			typeArguments[0].Flags()&checker.TypeFlagsUnionOrIntersection != 0 {
 			var members []types.Type
