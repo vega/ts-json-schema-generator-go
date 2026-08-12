@@ -1,7 +1,5 @@
 package parser
 
-// Port of src/NodeParser/CallExpressionParser.ts.
-
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
@@ -10,6 +8,8 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// CallExpressionParser parses call expressions by evaluating the call's
+// return type (src/NodeParser/CallExpressionParser.ts).
 type CallExpressionParser struct {
 	typeChecker     *checker.Checker
 	childNodeParser NodeParser

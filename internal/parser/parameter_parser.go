@@ -1,14 +1,14 @@
 package parser
 
-// Port of src/NodeParser/ParameterParser.ts. Registered wrapped in withJsDoc
-// so parameter JSDoc is read via the annotation decorator.
-
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// ParameterParser parses function parameters
+// (src/NodeParser/ParameterParser.ts). It is registered wrapped in withJsDoc
+// so parameter JSDoc is read via the annotation decorator.
 type ParameterParser struct {
 	childNodeParser NodeParser
 }

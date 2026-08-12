@@ -1,7 +1,5 @@
 package parser
 
-// Port of src/NodeParser/InterfaceAndClassNodeParser.ts.
-
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
@@ -10,6 +8,8 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// InterfaceAndClassNodeParser parses interface and class declarations into
+// object types (src/NodeParser/InterfaceAndClassNodeParser.ts).
 type InterfaceAndClassNodeParser struct {
 	typeChecker          *checker.Checker
 	childNodeParser      NodeParser

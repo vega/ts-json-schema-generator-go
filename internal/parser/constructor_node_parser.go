@@ -1,7 +1,5 @@
 package parser
 
-// Port of src/NodeParser/ConstructorNodeParser.ts.
-
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 
@@ -9,6 +7,8 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// ConstructorNodeParser parses constructor types and declarations
+// (src/NodeParser/ConstructorNodeParser.ts).
 type ConstructorNodeParser struct {
 	childNodeParser NodeParser
 	functions       config.FunctionOptions

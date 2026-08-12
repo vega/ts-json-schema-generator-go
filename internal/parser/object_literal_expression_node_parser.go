@@ -1,7 +1,5 @@
 package parser
 
-// Port of src/NodeParser/ObjectLiteralExpressionNodeParser.ts.
-
 import (
 	"fmt"
 
@@ -11,6 +9,8 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// ObjectLiteralExpressionNodeParser parses object literal expressions
+// (src/NodeParser/ObjectLiteralExpressionNodeParser.ts).
 type ObjectLiteralExpressionNodeParser struct {
 	childNodeParser NodeParser
 	checker         *checker.Checker

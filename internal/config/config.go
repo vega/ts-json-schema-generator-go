@@ -1,37 +1,47 @@
 // Package config holds generator configuration, mirroring src/Config.ts.
 package config
 
+// Expose selects which types get their own definition in the output.
 type Expose string
 
+// Valid Expose values.
 const (
 	ExposeAll    Expose = "all"
 	ExposeNone   Expose = "none"
 	ExposeExport Expose = "export"
 )
 
+// JSDocMode selects how much JSDoc is carried over into the schema.
 type JSDocMode string
 
+// Valid JSDocMode values.
 const (
 	JSDocNone     JSDocMode = "none"
 	JSDocBasic    JSDocMode = "basic"
 	JSDocExtended JSDocMode = "extended"
 )
 
+// DiscriminatorType selects the encoding used for discriminated unions.
 type DiscriminatorType string
 
+// Valid DiscriminatorType values.
 const (
 	DiscriminatorJSONSchema DiscriminatorType = "json-schema"
 	DiscriminatorOpenAPI    DiscriminatorType = "open-api"
 )
 
+// FunctionOptions selects how function types are handled.
 type FunctionOptions string
 
+// Valid FunctionOptions values.
 const (
 	FunctionsFail    FunctionOptions = "fail"
 	FunctionsComment FunctionOptions = "comment"
 	FunctionsHide    FunctionOptions = "hide"
 )
 
+// Config is the full set of generator options. Use Default for the defaults;
+// the zero value is not a usable configuration.
 type Config struct {
 	// Path is a glob pattern for source TypeScript files to process. If not
 	// provided, falls back to files from tsconfig.

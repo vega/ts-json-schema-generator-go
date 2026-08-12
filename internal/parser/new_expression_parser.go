@@ -1,7 +1,5 @@
 package parser
 
-// Port of src/NodeParser/NewExpressionParser.ts.
-
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
@@ -9,6 +7,8 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// NewExpressionParser parses `new Foo()` expressions via the constructed type
+// (src/NodeParser/NewExpressionParser.ts).
 type NewExpressionParser struct {
 	typeChecker     *checker.Checker
 	childNodeParser NodeParser
