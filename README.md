@@ -42,6 +42,17 @@ ts-json-schema-generator --path 'my/project/**/*.ts' --type 'My.Type.Name'
 
 The flags mirror the original CLI: `--path/-p`, `--type/-t`, `--tsconfig/-f`, `--id/-i`, `--expose/-e`, `--jsDoc/-j`, `--functions`, `--markdown-description`, `--full-description`, `--minify`, `--unstable`, `--no-top-ref`, `--no-type-check`, `--no-ref-encode`, `--additional-properties`, `--validation-keywords`, `--out/-o`. See [the original documentation](https://github.com/vega/ts-json-schema-generator#options) for what they do.
 
+### `--outdir`: one file per type
+
+`--outdir <dir>` is the one flag this port adds on top of the original CLI. It writes a separate schema file per requested type to `<dir>/<type>.schema.json`, parsing and type-checking the sources only once for the whole set — the alternative, one invocation per type, repeats that work every time:
+
+```bash
+ts-json-schema-generator --path 'src/**/*.ts' --outdir schemas --type Spec --type Config
+# schemas/Spec.schema.json, schemas/Config.schema.json
+```
+
+Each file is exactly the schema that a single `--type` run would produce (a top-level `$ref` plus that type's reachable definitions), and every other flag applies to all of them. `--outdir` cannot be combined with `--out`, needs the types spelled out (no `*`, no duplicates), and rejects type names that would not make sound file names.
+
 ## Building
 
 ```bash

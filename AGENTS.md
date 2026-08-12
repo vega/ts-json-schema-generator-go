@@ -127,6 +127,9 @@ Deliberate and documented in commit history:
    npm package wraps it with `generateSchema`/`generateSchemaSync` (config in,
    schema out), which cover config-only usage — `tsProgram` and the augmentors
    have no equivalent across a process boundary.
+6. The CLI adds `--outdir <dir>` (an extension; no equivalent in the reference
+   CLI): one `<type>.schema.json` per `--type`, all from a single parse. Each
+   file is byte-identical to the corresponding single-type `--out` run.
 
 ## Downstream regression tests
 
