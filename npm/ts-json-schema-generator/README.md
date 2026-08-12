@@ -26,7 +26,7 @@ One flag is new in version 3: `--outdir <dir>` writes a separate `<dir>/<type>.s
 npx ts-json-schema-generator --path 'src/**/*.ts' --outdir schemas --type Spec --type Config
 ```
 
-It cannot be combined with `--out`, and the types have to be listed explicitly (no `*`). The programmatic API below is "config in, schema out" and has no `outdir` equivalent.
+Each file is exactly what that type's own `--out` run would have produced. `--outdir` cannot be combined with `--out`, and the types have to be listed explicitly (no `*`). Note that `--id` would then put the same `$id` on every file, which collides in resolvers that cache by `$id`. The programmatic API below is "config in, schema out" and has no `outdir` equivalent.
 
 ## Programmatic usage
 

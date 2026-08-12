@@ -54,6 +54,17 @@ func NewSchemaGenerator(
 	}
 }
 
+// SetTopRefName renames the top-level definition that a --top-ref generation
+// produces, for callers that generate one named type at a time from a single
+// parser chain (the CLI's --outdir mode). It is a no-op unless the chain ends
+// in a TopRefNodeParser, which is what factory.CreateParser builds; a chain
+// assembled some other way has no top-level name to set.
+func (g *SchemaGenerator) SetTopRefName(fullName string) {
+	if topRef, ok := g.nodeParser.(*parser.TopRefNodeParser); ok {
+		topRef.SetFullName(fullName)
+	}
+}
+
 // CreateSchema generates a schema for the named types ("*" or empty means
 // all exported root types). Panics from the parser/formatter pipeline are
 // recovered and returned as errors.

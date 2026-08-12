@@ -67,7 +67,7 @@ func run(args []string) error {
 
 	flags.StringVar(&path, "path", "", "Source file path (glob; supports * and **)")
 	flags.StringVar(&path, "p", "", "Alias for --path")
-	flags.Var(&types, "type", "Type name(s); repeatable or comma-separated ('*' for all)")
+	flags.Var(&types, "type", "Type name; repeat the flag for multiple types ('*' for all)")
 	flags.Var(&types, "t", "Alias for --type")
 	flags.StringVar(&id, "id", "", "$id for generated schema")
 	flags.StringVar(&id, "i", "", "Alias for --id")
@@ -114,8 +114,16 @@ func run(args []string) error {
 	if err := validateChoice("functions", functions, "fail", "comment", "hide"); err != nil {
 		return err
 	}
-	if outdir != "" {
-		if err := validateOutdirFlags(out, types); err != nil {
+	// Checked via Visit rather than a non-empty value so that an explicit
+	// --outdir "" is an error instead of silently falling back to stdout.
+	outdirSet := false
+	flags.Visit(func(f *flag.Flag) {
+		if f.Name == "outdir" {
+			outdirSet = true
+		}
+	})
+	if outdirSet {
+		if err := validateOutdirFlags(outdir, out, types); err != nil {
 			return err
 		}
 	}
@@ -158,10 +166,14 @@ func run(args []string) error {
 	}
 	defer release()
 
-	// One schema file per type, sharing the single program built above: the
-	// parse dominates the cost, generation per type does not.
+	// One schema file per type, all sharing the program built above: loading,
+	// parsing and type-checking the project happen once for the whole set and
+	// only the per-type schema walk repeats.
 	if outdir != "" {
 		for _, typeName := range cfg.Types {
+			// The chain was built for the whole --type list, so it does not
+			// know which single type each file is for.
+			gen.SetTopRefName(typeName)
 			output, err := generateSchema(gen, cfg, []string{typeName})
 			if err != nil {
 				return fmt.Errorf("generating schema for type %q: %w", typeName, err)
@@ -209,10 +221,17 @@ func writeSchemaFile(path string, output []byte) error {
 }
 
 // validateOutdirFlags rejects the --outdir combinations whose per-type file
-// names would be ambiguous, missing, or unsafe, before the sources are parsed.
-func validateOutdirFlags(out string, types []string) error {
+// names would be ambiguous, missing, or unsafe. It runs before the sources are
+// parsed, so a mistake costs no compile time.
+func validateOutdirFlags(outdir, out string, types []string) error {
+	if outdir == "" {
+		return errors.New("--outdir needs a directory path")
+	}
 	if out != "" {
 		return errors.New("--out and --outdir are mutually exclusive")
+	}
+	if info, err := os.Stat(outdir); err == nil && !info.IsDir() {
+		return fmt.Errorf("--outdir %q exists and is not a directory", outdir)
 	}
 	if len(types) == 0 {
 		return errors.New("--outdir requires at least one --type: it writes one file per named type")

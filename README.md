@@ -44,7 +44,7 @@ The flags mirror the original CLI: `--path/-p`, `--type/-t`, `--tsconfig/-f`, `-
 
 ### `--outdir`: one file per type
 
-`--outdir <dir>` is the one flag this port adds on top of the original CLI. It writes a separate schema file per requested type to `<dir>/<type>.schema.json`, parsing and type-checking the sources only once for the whole set — the alternative, one invocation per type, repeats that work every time:
+`--outdir <dir>` is the one flag this port adds on top of the original CLI. It writes a separate schema file per requested type to `<dir>/<type>.schema.json`:
 
 ```bash
 ts-json-schema-generator --path 'src/**/*.ts' --outdir schemas --type Spec --type Config
@@ -52,6 +52,10 @@ ts-json-schema-generator --path 'src/**/*.ts' --outdir schemas --type Spec --typ
 ```
 
 Each file is exactly the schema that a single `--type` run would produce (a top-level `$ref` plus that type's reachable definitions), and every other flag applies to all of them. `--outdir` cannot be combined with `--out`, needs the types spelled out (no `*`, no duplicates), and rejects type names that would not make sound file names.
+
+What it saves is the work that happens once per process: loading the program, parsing, and — unless you pass `--no-type-check` — checking the whole project. Only the per-type schema walk repeats. Generating eight vega-lite types this way takes about half as long as eight separate invocations with `--no-type-check`; leave type checking on, as it is by default, and the gap widens, because the full-project check is the part being amortized. For a single type there is nothing to amortize and `--out` is equivalent.
+
+Two things to know before wiring it into a build. Files are written as each type completes, so a failure partway through — an unknown type name, say — leaves the files generated before it on disk, and the error names the type it failed on. And `--id` sets the same `$id` on every file, since each file is just what its single-type run would have produced; that will collide in validators and resolvers that cache schemas by `$id`, so either leave `--id` off or set the per-file `$id` yourself afterwards.
 
 ## Building
 

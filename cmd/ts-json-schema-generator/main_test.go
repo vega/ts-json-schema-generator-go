@@ -51,14 +51,24 @@ func TestOutdirMatchesSingleTypeRuns(t *testing.T) {
 	// MyObject and MySubObject share a definition (MyObject references
 	// MySubObject), so the second generation runs against a warm cache.
 	const fixture = "interface-multi"
-	types := []string{"MyObject", "MySubObject"}
+	both := []string{"MyObject", "MySubObject"}
 
 	cases := []struct {
 		name  string
+		types []string
 		extra []string
 	}{
-		{name: "defaults"},
-		{name: "minify-no-top-ref-id", extra: []string{"--minify", "--no-top-ref", "--id", "https://example.com/s.json"}},
+		{name: "defaults", types: both},
+		{name: "minify-no-top-ref-id", types: both, extra: []string{"--minify", "--no-top-ref", "--id", "https://example.com/s.json"}},
+		// --expose none leaves the root type undecorated, so the top-level
+		// definition takes its name from TopRefNodeParser rather than from an
+		// ExposeNodeParser definition. That name has to follow the type being
+		// generated, not the whole --type list.
+		{name: "expose-none", types: both, extra: []string{"--expose", "none"}},
+		// A single --type is the other naming branch: the parser chain is
+		// built already knowing the name.
+		{name: "single-type", types: []string{"MyObject"}},
+		{name: "single-type-expose-none", types: []string{"MyObject"}, extra: []string{"--expose", "none"}},
 	}
 
 	for _, tc := range cases {
@@ -66,14 +76,14 @@ func TestOutdirMatchesSingleTypeRuns(t *testing.T) {
 			outdir := filepath.Join(t.TempDir(), "nested", "schemas")
 
 			args := []string{"--path", fixturePath(t, fixture), "--no-type-check", "--outdir", outdir}
-			for _, typeName := range types {
+			for _, typeName := range tc.types {
 				args = append(args, "--type", typeName)
 			}
 			if err := run(append(args, tc.extra...)); err != nil {
 				t.Fatalf("run with --outdir: %v", err)
 			}
 
-			for _, typeName := range types {
+			for _, typeName := range tc.types {
 				reference := filepath.Join(t.TempDir(), "reference.json")
 				single := []string{
 					"--path", fixturePath(t, fixture), "--no-type-check",
@@ -149,8 +159,16 @@ func TestOutdirValidation(t *testing.T) {
 	dir := t.TempDir()
 	path := fixturePath(t, "interface-multi")
 
+	// An existing regular file where a directory is wanted.
+	existingFile := filepath.Join(t.TempDir(), "not-a-dir")
+	if err := os.WriteFile(existingFile, []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
 	cases := []struct {
-		name    string
+		name string
+		// path overrides --path; empty means the valid fixture glob.
+		path    string
 		args    []string
 		wantErr string
 	}{
@@ -184,11 +202,34 @@ func TestOutdirValidation(t *testing.T) {
 			args:    []string{"--outdir", dir, "--type", ""},
 			wantErr: `cannot be used as a file name`,
 		},
+		{
+			name:    "empty outdir value",
+			args:    []string{"--outdir", "", "--type", "MyObject"},
+			wantErr: "--outdir needs a directory path",
+		},
+		{
+			name:    "outdir is an existing file",
+			args:    []string{"--outdir", existingFile, "--type", "MyObject"},
+			wantErr: "exists and is not a directory",
+		},
+		{
+			// The whole point of validating up front is that a bad flag
+			// combination costs no parse. With an unusable --path, reaching
+			// the compiler at all would surface a different error.
+			name:    "validation precedes parsing",
+			path:    filepath.Join(t.TempDir(), "no", "such", "dir", "*.ts"),
+			args:    []string{"--outdir", dir, "--out", filepath.Join(dir, "s.json"), "--type", "MyObject"},
+			wantErr: "--out and --outdir are mutually exclusive",
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := run(append([]string{"--path", path, "--no-type-check"}, tc.args...))
+			argPath := tc.path
+			if argPath == "" {
+				argPath = path
+			}
+			err := run(append([]string{"--path", argPath, "--no-type-check"}, tc.args...))
 			if err == nil {
 				t.Fatalf("expected an error, got none")
 			}
