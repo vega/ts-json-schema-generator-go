@@ -27,5 +27,5 @@ func (p *PropertyAccessExpressionParser) CreateType(node *ast.Node, ctx *Context
 	typ := p.typeChecker.GetTypeAtLocation(node)
 	// No null guards, matching the TypeScript implementation (primitives with
 	// no symbol throw there as well).
-	return p.childNodeParser.CreateType(checker.Type_symbol(typ).Declarations[0], ctx, nil)
+	return p.childNodeParser.CreateType(typ.Symbol().Declarations[0], ctx, nil)
 }

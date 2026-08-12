@@ -51,8 +51,8 @@ func (p *PromiseNodeParser) SupportsNode(node *ast.Node) bool {
 	// In types like: A<T> = T, type C = A<1>, C has the same type as A<1> and
 	// 1; the awaited type is not the same reference as the type, so an
 	// assignability check is needed.
-	return !checker.Checker_isTypeAssignableTo(p.typeChecker, t, awaitedType) &&
-		!checker.Checker_isTypeAssignableTo(p.typeChecker, awaitedType, t)
+	return !p.typeChecker.IsTypeAssignableTo(t, awaitedType) &&
+		!p.typeChecker.IsTypeAssignableTo(awaitedType, t)
 }
 
 func (p *PromiseNodeParser) CreateType(node *ast.Node, context *Context, _ *types.ReferenceType) types.Type {
