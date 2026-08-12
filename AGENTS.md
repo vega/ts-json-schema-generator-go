@@ -29,7 +29,7 @@ ways that change generated schemas.
 
 ```bash
 npm install        # once; vega-lite sources for the regression test
-go test ./...      # 251 golden-schema fixtures + full vega-lite schema, ~10 s
+go test ./...      # 255 golden-schema fixtures + full vega-lite schema, ~10 s
 ```
 
 - `test/valid-data/<name>/` holds each fixture (`main.ts` + golden
