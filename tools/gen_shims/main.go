@@ -1,3 +1,6 @@
+// Command gen_shims generates the modules under shim/, which re-export the
+// typescript-go internal packages so this repo can import them. Unexported
+// members are surfaced by listing them in a package's extra-shim.json.
 package main
 
 import (
@@ -5,23 +8,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/types"
-	"golang.org/x/text/cases"
-	"golang.org/x/text/language"
-	"golang.org/x/tools/go/packages"
 	"log"
 	"maps"
 	"os"
 	"path"
 	"slices"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
+	"golang.org/x/tools/go/packages"
 )
 
 const tsgoInternalPrefix = "github.com/microsoft/typescript-go/internal/"
 
+// ExtraShim is the schema of a package's extra-shim.json: members the
+// generator cannot discover from the package's exported API.
 type ExtraShim struct {
 	ExtraFunctions  []string
-	ExtraMethods    map[string]([]string)
-	ExtraFields     map[string]([]string)
+	ExtraMethods    map[string][]string
+	ExtraFields     map[string][]string
 	IgnoreFunctions []string
 }
 

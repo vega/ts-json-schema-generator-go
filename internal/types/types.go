@@ -22,6 +22,7 @@ type Type interface {
 // ---------------------------------------------------------------------------
 // Simple types
 
+// AnyType represents `any`.
 type AnyType struct{}
 
 func (t *AnyType) ID() string   { return "any" }
@@ -36,6 +37,8 @@ type UnknownType struct {
 func (t *UnknownType) ID() string   { return "unknown" }
 func (t *UnknownType) Name() string { return t.ID() }
 
+// StringType represents `string`. PreserveLiterals keeps literal members of a
+// union alongside the widened string type instead of collapsing them.
 type StringType struct {
 	PreserveLiterals bool
 }
@@ -43,36 +46,43 @@ type StringType struct {
 func (t *StringType) ID() string   { return "string" }
 func (t *StringType) Name() string { return t.ID() }
 
+// NumberType represents `number`.
 type NumberType struct{}
 
 func (t *NumberType) ID() string   { return "number" }
 func (t *NumberType) Name() string { return t.ID() }
 
+// BooleanType represents `boolean`.
 type BooleanType struct{}
 
 func (t *BooleanType) ID() string   { return "boolean" }
 func (t *BooleanType) Name() string { return t.ID() }
 
+// NullType represents `null`.
 type NullType struct{}
 
 func (t *NullType) ID() string   { return "null" }
 func (t *NullType) Name() string { return t.ID() }
 
+// SymbolType represents `symbol`.
 type SymbolType struct{}
 
 func (t *SymbolType) ID() string   { return "symbol" }
 func (t *SymbolType) Name() string { return t.ID() }
 
+// UndefinedType represents `undefined`.
 type UndefinedType struct{}
 
 func (t *UndefinedType) ID() string   { return "undefined" }
 func (t *UndefinedType) Name() string { return t.ID() }
 
+// VoidType represents `void`.
 type VoidType struct{}
 
 func (t *VoidType) ID() string   { return "void" }
 func (t *VoidType) Name() string { return t.ID() }
 
+// NeverType represents `never`. Use IsNeverLike to also match HiddenType.
 type NeverType struct{}
 
 func (t *NeverType) ID() string   { return "never" }
@@ -111,6 +121,7 @@ func IsNeverLike(t Type) bool {
 // LiteralValue is a string, float64, or bool.
 type LiteralValue = any
 
+// LiteralType is a single literal value such as `"a"`, `3`, or `true`.
 type LiteralType struct {
 	Value LiteralValue
 }
@@ -126,6 +137,9 @@ func (t *LiteralType) IsString() bool {
 // EnumValue is a string, float64, bool, or nil.
 type EnumValue = any
 
+// EnumType is a set of literal values, from a TypeScript enum or a union of
+// literals. Types holds the per-value LiteralType/NullType, built by
+// NewEnumType.
 type EnumType struct {
 	id     string
 	Values []EnumValue
@@ -150,6 +164,7 @@ func (t *EnumType) Name() string { return t.ID() }
 // ---------------------------------------------------------------------------
 // Composite types
 
+// ObjectProperty is a single property of an ObjectType.
 type ObjectProperty struct {
 	name     string
 	Type     Type
@@ -163,6 +178,8 @@ func NewObjectProperty(name string, typ Type, required bool) *ObjectProperty {
 // Name returns the property name with surrounding quotes stripped.
 func (p *ObjectProperty) Name() string { return StripQuotes(p.name) }
 
+// ObjectType is an interface, class, or object type literal. BaseTypes holds
+// the extended types, which the formatter merges via allOf.
 type ObjectType struct {
 	id         string
 	BaseTypes  []Type
@@ -186,6 +203,8 @@ func NewObjectType(id string, baseTypes []Type, properties []*ObjectProperty, ad
 func (t *ObjectType) ID() string   { return t.id }
 func (t *ObjectType) Name() string { return t.ID() }
 
+// UnionType is a union of member types. Discriminator is the property name
+// set by the @discriminator annotation, if any.
 type UnionType struct {
 	types         []Type
 	Discriminator string
@@ -265,6 +284,7 @@ func (t *UnionType) FlattenedTypes(deref func(Type) Type) []Type {
 	return out
 }
 
+// IntersectionType is an intersection of member types.
 type IntersectionType struct {
 	types []Type
 }
@@ -285,6 +305,7 @@ func (t *IntersectionType) ID() string {
 
 func (t *IntersectionType) Name() string { return t.ID() }
 
+// ArrayType is an array with a single item type.
 type ArrayType struct {
 	Item Type
 }
@@ -292,6 +313,7 @@ type ArrayType struct {
 func (t *ArrayType) ID() string   { return t.Item.ID() + "[]" }
 func (t *ArrayType) Name() string { return t.ID() }
 
+// TupleType is a fixed-length array with a type per position.
 type TupleType struct {
 	types []Type
 }
@@ -331,6 +353,7 @@ func (t *TupleType) ID() string {
 
 func (t *TupleType) Name() string { return t.ID() }
 
+// OptionalType marks an optional tuple member or parameter.
 type OptionalType struct {
 	Type Type
 }
@@ -347,6 +370,7 @@ type RestType struct {
 func (t *RestType) ID() string   { return "..." + t.Type.ID() + t.Title }
 func (t *RestType) Name() string { return t.ID() }
 
+// InferType is the placeholder for an `infer T` type parameter.
 type InferType struct {
 	id string
 }
@@ -359,6 +383,8 @@ func (t *InferType) Name() string { return t.ID() }
 // ---------------------------------------------------------------------------
 // Wrapper types
 
+// AliasType names a type without changing it, preserving the alias name for
+// the generated definition.
 type AliasType struct {
 	id   string
 	Type Type
@@ -372,6 +398,7 @@ func (t *AliasType) Name() string { return t.ID() }
 // Annotations is a set of JSDoc-derived keywords merged into definitions.
 type Annotations = map[string]any
 
+// AnnotatedType attaches JSDoc-derived annotations to a type.
 type AnnotatedType struct {
 	Type        Type
 	Annotations Annotations
@@ -384,6 +411,8 @@ func (t *AnnotatedType) ID() string {
 
 func (t *AnnotatedType) Name() string { return t.ID() }
 
+// DefinitionType marks a type that gets its own entry under "definitions" and
+// is referenced by $ref elsewhere.
 type DefinitionType struct {
 	name string
 	Type Type
@@ -450,6 +479,8 @@ func (t *ReferenceType) SetType(typ Type) {
 // ---------------------------------------------------------------------------
 // Function-ish types
 
+// FunctionType is a function signature. How it is rendered depends on
+// config.FunctionOptions.
 type FunctionType struct {
 	Comment string
 	// NamedArguments is an *ObjectType, or an *InferType for signatures like
@@ -464,6 +495,7 @@ type FunctionType struct {
 func (t *FunctionType) ID() string   { return "function" }
 func (t *FunctionType) Name() string { return t.ID() }
 
+// ConstructorType is a constructor signature.
 type ConstructorType struct {
 	Comment string
 	// NamedArguments is an *ObjectType, or an *InferType (see FunctionType).

@@ -1,7 +1,5 @@
 package parser
 
-// Port of src/NodeParser/TypeLiteralNodeParser.ts.
-
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
@@ -10,6 +8,8 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// TypeLiteralNodeParser parses inline object type literals
+// (src/NodeParser/TypeLiteralNodeParser.ts).
 type TypeLiteralNodeParser struct {
 	typeChecker          *checker.Checker
 	childNodeParser      NodeParser

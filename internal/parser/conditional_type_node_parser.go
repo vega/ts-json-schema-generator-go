@@ -1,7 +1,5 @@
 package parser
 
-// Port of src/NodeParser/ConditionalTypeNodeParser.ts.
-
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
@@ -18,6 +16,8 @@ type conditionalCheckType struct {
 	typ           types.Type
 }
 
+// ConditionalTypeNodeParser resolves conditional types
+// (src/NodeParser/ConditionalTypeNodeParser.ts).
 type ConditionalTypeNodeParser struct {
 	typeChecker     *checker.Checker
 	childNodeParser NodeParser

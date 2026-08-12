@@ -1,9 +1,5 @@
 package parser
 
-// Port of src/NodeParser/FunctionNodeParser.ts, including the exported
-// helpers shared with ConstructorNodeParser and TypeofNodeParser, and the
-// comment building from src/Type/FunctionType.ts / ConstructorType.ts.
-
 import (
 	"strings"
 
@@ -13,6 +9,10 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// FunctionNodeParser parses function types and declarations
+// (src/NodeParser/FunctionNodeParser.ts). This file also holds the exported
+// helpers shared with ConstructorNodeParser and TypeofNodeParser, and the
+// comment building from src/Type/FunctionType.ts and ConstructorType.ts.
 type FunctionNodeParser struct {
 	childNodeParser NodeParser
 	functions       config.FunctionOptions

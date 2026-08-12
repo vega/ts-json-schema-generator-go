@@ -23,6 +23,8 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// SchemaGenerator generates JSON Schema from a compiled TypeScript program
+// (src/SchemaGenerator.ts). It is not safe for concurrent use.
 type SchemaGenerator struct {
 	program       *compiler.Program
 	typeChecker   *checker.Checker
@@ -31,6 +33,8 @@ type SchemaGenerator struct {
 	config        *config.Config
 }
 
+// NewSchemaGenerator returns a generator over the given program. A nil cfg
+// means config.Default.
 func NewSchemaGenerator(
 	program *compiler.Program,
 	typeChecker *checker.Checker,

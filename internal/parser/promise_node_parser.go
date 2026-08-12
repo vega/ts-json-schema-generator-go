@@ -1,11 +1,5 @@
 package parser
 
-// Port of src/NodeParser/PromiseNodeParser.ts.
-//
-// Needs to be registered before the InterfaceDeclaration, ClassDeclaration,
-// ExpressionWithTypeArguments and TypeAliasDeclaration parsers (the chain
-// wiring is responsible for that).
-
 import (
 	"fmt"
 
@@ -15,6 +9,11 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// PromiseNodeParser unwraps Promise<T> (src/NodeParser/PromiseNodeParser.ts).
+//
+// It must be registered before the InterfaceDeclaration, ClassDeclaration,
+// ExpressionWithTypeArguments and TypeAliasDeclaration parsers (the chain
+// wiring is responsible for that).
 type PromiseNodeParser struct {
 	typeChecker     *checker.Checker
 	childNodeParser NodeParser

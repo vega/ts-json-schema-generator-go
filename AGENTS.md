@@ -85,6 +85,32 @@ pseudo-version — no fork, no submodule, no patches.
 - The generator is **not safe for concurrent use** (package-level caches,
   cwd-dependent node keys). One generation at a time per process.
 
+## Go style
+
+Baseline: [Effective Go](https://go.dev/doc/effective_go) and the
+[Google Go Style Guide](https://google.github.io/styleguide/go/); the
+[decisions](https://google.github.io/styleguide/go/decisions) page has the
+concrete rules. `gofmt` and `go vet` are clean, as is `staticcheck` on its
+default checks — keep them that way.
+
+Where the guides conflict with the port, **the mirror wins**:
+
+- **Panics are the error convention here, not a bug.** Parsers and formatters
+  `panic(error)` because the TypeScript throws; `generator.CreateSchema`
+  recovers at the boundary. Do not convert these to `error` returns.
+- **Names mirror the TypeScript.** `generator.SchemaGenerator` stutters and
+  `getTypeId`/`getTsConfig` violate the initialism rule (staticcheck ST1003
+  under `-checks=all`). Both stay: grepping a Go name against the reference
+  `src/` file is how this code is maintained. Don't rename to satisfy a linter.
+- **Doc comments go on types, not on boilerplate.** Each parser/formatter type
+  gets one line naming its TypeScript source, e.g. `// ArrayNodeParser handles
+  array type nodes (src/NodeParser/ArrayNodeParser.ts).` The `NewX`
+  constructors and the `SupportsNode`/`CreateType`/`GetDefinition`/`GetChildren`
+  methods implement documented interfaces and are intentionally left bare —
+  don't bulk-add comments there.
+- Package-level caches and the non-concurrency-safe generator are accepted
+  trade-offs (see above), not findings to fix.
+
 ## Known divergences from the TypeScript version
 
 Deliberate and documented in commit history:

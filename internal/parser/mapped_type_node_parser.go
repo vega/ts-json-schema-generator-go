@@ -1,7 +1,5 @@
 package parser
 
-// Port of src/NodeParser/MappedTypeNodeParser.ts.
-
 import (
 	"fmt"
 
@@ -10,6 +8,8 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
+// MappedTypeNodeParser expands mapped types such as Record and Partial
+// (src/NodeParser/MappedTypeNodeParser.ts).
 type MappedTypeNodeParser struct {
 	childNodeParser      NodeParser
 	additionalProperties bool
