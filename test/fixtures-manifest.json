@@ -1113,6 +1113,12 @@
     ]
   },
   {
+    "name": "type-indexed-access-tuple-rest",
+    "types": [
+      "TupleElement"
+    ]
+  },
+  {
     "name": "type-indexed-access-tuple-union",
     "types": [
       "FormLayout"
