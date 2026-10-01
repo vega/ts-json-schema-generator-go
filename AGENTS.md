@@ -150,6 +150,12 @@ Changes go through issues and pull requests: file (or find) an issue, work
 on a branch, open a PR whose description says `Closes #N`, and leave merging
 to a human reviewer. Do not commit to `main` directly.
 
+Write pull request descriptions for people to read. Say what changed and
+why, in short prose. Leave out details that do not help the reviewer, such
+as a "Verification" or "Checks" section that only repeats what CI runs.
+Mention testing only when you did something CI does not do, for example a
+manual check or a golden-file update.
+
 ## Keeping up with typescript-go
 
 `tools/bump-tsgo.sh <ref>` re-pins the compiler and regenerates shims; the
