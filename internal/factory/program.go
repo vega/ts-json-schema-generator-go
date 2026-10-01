@@ -148,7 +148,6 @@ func getTsConfig(cfg *config.Config, cwd string, host compiler.CompilerHost) (*t
 		StrictNullChecks:       core.TSFalse,
 		SkipLibCheck:           core.TSTrue,
 		SkipDefaultLibCheck:    core.TSTrue,
-		ESModuleInterop:        core.TSTrue,
 		Types:                  []string{"node"},
 	}
 	return tsoptions.NewParsedCommandLine(options, nil, tspath.ComparePathsOptions{
