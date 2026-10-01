@@ -1,6 +1,6 @@
 module github.com/vega/ts-json-schema-generator-go
 
-go 1.26
+go 1.26.0
 
 replace (
 	github.com/microsoft/typescript-go/shim/ast => ./shim/ast
@@ -27,8 +27,8 @@ require (
 	github.com/microsoft/typescript-go/shim/tsoptions v0.0.0
 	github.com/microsoft/typescript-go/shim/tspath v0.0.0
 	github.com/microsoft/typescript-go/shim/vfs/osvfs v0.0.0
-	golang.org/x/text v0.40.0
-	golang.org/x/tools v0.48.0
+	golang.org/x/text v0.42.0
+	golang.org/x/tools v0.49.0
 )
 
 require (
@@ -36,7 +36,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/microsoft/typescript-go v0.0.0-20260708042240-2bd066d87f5b // indirect
 	github.com/zeebo/xxh3 v1.1.0 // indirect
-	golang.org/x/mod v0.38.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/mod v0.41.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
 )
