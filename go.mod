@@ -16,7 +16,7 @@ replace (
 )
 
 require (
-	github.com/bmatcuk/doublestar/v4 v4.10.0
+	github.com/bmatcuk/doublestar/v4 v4.10.2
 	github.com/microsoft/typescript-go/shim/ast v0.0.0-00010101000000-000000000000
 	github.com/microsoft/typescript-go/shim/bundled v0.0.0
 	github.com/microsoft/typescript-go/shim/checker v0.0.0-00010101000000-000000000000
