@@ -65,6 +65,29 @@ func (p *IndexedAccessTypeNodeParser) createIndexedType(objectType *ast.Node, ct
 	return nil
 }
 
+// getTupleIndexTypes returns the element types of tuple, with rest elements
+// unwrapped to the item types they contribute.
+func getTupleIndexTypes(tuple *types.TupleType) []types.Type {
+	var indexTypes []types.Type
+	for _, typ := range tuple.Types() {
+		rest, isRest := types.DerefType(typ).(*types.RestType)
+		if !isRest {
+			indexTypes = append(indexTypes, typ)
+			continue
+		}
+
+		switch restType := types.DerefType(rest.Type).(type) {
+		case *types.ArrayType:
+			indexTypes = append(indexTypes, restType.Item)
+		case *types.TupleType:
+			indexTypes = append(indexTypes, getTupleIndexTypes(restType)...)
+		default:
+			indexTypes = append(indexTypes, rest)
+		}
+	}
+	return indexTypes
+}
+
 func (p *IndexedAccessTypeNodeParser) CreateType(node *ast.Node, ctx *Context, _ *types.ReferenceType) types.Type {
 	accessNode := node.AsIndexedAccessTypeNode()
 
@@ -97,7 +120,7 @@ func (p *IndexedAccessTypeNodeParser) CreateType(node *ast.Node, ctx *Context, _
 		if propertyType == nil {
 			if _, isNumber := typ.(*types.NumberType); isNumber {
 				if tuple, isTuple := objectType.(*types.TupleType); isTuple {
-					propertyTypes = append(propertyTypes, types.NewUnionType(tuple.Types()))
+					propertyTypes = append(propertyTypes, types.NewUnionType(getTupleIndexTypes(tuple)).Normalize())
 					continue
 				}
 			}
