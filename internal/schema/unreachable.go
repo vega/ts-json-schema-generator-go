@@ -57,11 +57,8 @@ func addReachable(d *Definition, definitions map[string]*Definition, reachable m
 	case d.Not != nil:
 		addReachable(d.Not, definitions, reachable)
 	case d.HasType("object"):
-		if d.Properties != nil {
-			for _, k := range d.Properties.Keys() {
-				prop, _ := d.Properties.Get(k)
-				addReachable(prop, definitions, reachable)
-			}
+		for _, prop := range d.Properties.All() {
+			addReachable(prop, definitions, reachable)
 		}
 		if ap, ok := d.AdditionalProperties.(*Definition); ok {
 			addReachable(ap, definitions, reachable)
@@ -103,7 +100,7 @@ func EncodeRef(name string) string {
 		case b == '-' || b == '_' || b == '.' || b == '!' || b == '~' || b == '*' || b == '\'' || b == '(' || b == ')':
 			sb.WriteByte(b)
 		default:
-			sb.WriteString(fmt.Sprintf("%%%02X", b))
+			fmt.Fprintf(&sb, "%%%02X", b)
 		}
 	}
 	return sb.String()

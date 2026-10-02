@@ -9,13 +9,14 @@ import (
 
 	"github.com/vega/ts-json-schema-generator-go/internal/config"
 	"github.com/vega/ts-json-schema-generator-go/internal/factory"
+	"github.com/vega/ts-json-schema-generator-go/internal/testutil"
 )
 
 // TestVegaLite generates the vega-lite schema from the installed
 // node_modules/vega-lite sources and compares it with the golden file,
 // mirroring test/vega-lite/vega-lite.test.ts.
 func TestVegaLite(t *testing.T) {
-	root := repoRoot(t)
+	root := testutil.RepoRoot(t)
 	entry := filepath.Join(root, "node_modules", "vega-lite", "src", "index.ts")
 	requireNpmSources(t, entry)
 

@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/config"
@@ -275,10 +276,8 @@ func validateOutdirFlags(outdir, out string, types []string) error {
 }
 
 func validateChoice(name, value string, choices ...string) error {
-	for _, choice := range choices {
-		if value == choice {
-			return nil
-		}
+	if slices.Contains(choices, value) {
+		return nil
 	}
 	return fmt.Errorf("invalid value %q for --%s (choices: %s)", value, name, strings.Join(choices, ", "))
 }

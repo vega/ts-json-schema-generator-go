@@ -53,10 +53,7 @@ func (p *IntrinsicNodeParser) CreateType(node *ast.Node, ctx *Context, _ *types.
 	for i, value := range values {
 		literals[i] = &types.LiteralType{Value: method(value)}
 	}
-	if len(literals) == 1 {
-		return literals[0]
-	}
-	return types.NewUnionType(literals)
+	return singleOrUnion(literals)
 }
 
 func getIntrinsicParentName(node *ast.Node) string {

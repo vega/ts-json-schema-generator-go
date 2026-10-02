@@ -5,6 +5,7 @@ package generator
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"runtime"
 	"runtime/debug"
@@ -110,9 +111,7 @@ func (g *SchemaGenerator) createSchemaFromNodes(rootNodes []*ast.Node) *schema.D
 
 	reachable := map[string]*schema.Definition{}
 	for _, def := range rootTypeDefinitions {
-		for name, d := range schema.RemoveUnreachable(def, definitions) {
-			reachable[name] = d
-		}
+		maps.Copy(reachable, schema.RemoveUnreachable(def, definitions))
 	}
 
 	out := &schema.Definition{

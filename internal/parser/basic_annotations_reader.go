@@ -85,7 +85,12 @@ func NewBasicAnnotationsReader(extraTags map[string]bool) *BasicAnnotationsReade
 }
 
 func (r *BasicAnnotationsReader) GetAnnotations(node *ast.Node) types.Annotations {
-	jsDocTags := symbolJSDocTags(node)
+	return r.annotationsFromTags(symbolJSDocTags(node))
+}
+
+// annotationsFromTags converts the tags returned by symbolJSDocTags into
+// annotations, so that ExtendedAnnotationsReader can share one tag lookup.
+func (r *BasicAnnotationsReader) annotationsFromTags(jsDocTags []jsDocTagInfo) types.Annotations {
 	if len(jsDocTags) == 0 {
 		return nil
 	}
@@ -120,13 +125,12 @@ func (r *BasicAnnotationsReader) parseJSDocTag(jsDocTag jsDocTagInfo) (any, bool
 	if isTextTag {
 		return text, true
 	}
-	parsed, err := parseJSON5(text)
-	if err != nil {
-		parsed = text
+	if !jsonTags[jsDocTag.name] && !r.extraTags[jsDocTag.name] {
+		// Unknown jsDoc tag.
+		return nil, false
 	}
-	if jsonTags[jsDocTag.name] || r.extraTags[jsDocTag.name] {
+	if parsed, err := parseJSON5(text); err == nil {
 		return parsed, true
 	}
-	// Unknown jsDoc tag.
-	return nil, false
+	return text, true
 }

@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strconv"
 	"strings"
+	"unicode/utf16"
 )
 
 // Type is the interface implemented by every intermediate type.
@@ -578,11 +580,12 @@ func IsDeepLiteralUnion(t Type) bool {
 }
 
 // UniqueTypes de-duplicates by type ID, keeping first occurrences in order.
-func UniqueTypes(list []Type) []Type {
+// Nil interface values are dropped; T must be an interface type for that.
+func UniqueTypes[T Type](list []T) []T {
 	seen := make(map[string]bool, len(list))
-	out := make([]Type, 0, len(list))
+	out := make([]T, 0, len(list))
 	for _, t := range list {
-		if t == nil {
+		if Type(t) == nil {
 			continue
 		}
 		id := t.ID()
@@ -625,11 +628,7 @@ func writeStable(sb *strings.Builder, v any) {
 	case string:
 		sb.WriteString(quoteJSONString(x))
 	case bool:
-		if x {
-			sb.WriteString("true")
-		} else {
-			sb.WriteString("false")
-		}
+		sb.WriteString(strconv.FormatBool(x))
 	case float64:
 		// safe-stable-stringify, like JSON.stringify, renders non-finite
 		// numbers as null.
@@ -638,8 +637,6 @@ func writeStable(sb *strings.Builder, v any) {
 		} else {
 			sb.WriteString(NumberToString(x))
 		}
-	case int:
-		sb.WriteString(NumberToString(float64(x)))
 	case []any:
 		sb.WriteByte('[')
 		for i, e := range x {
@@ -666,7 +663,7 @@ func writeStable(sb *strings.Builder, v any) {
 		}
 		sb.WriteByte('}')
 	default:
-		sb.WriteString(fmt.Sprintf("%v", x))
+		fmt.Fprintf(sb, "%v", x)
 	}
 }
 
@@ -687,7 +684,7 @@ func quoteJSONString(s string) string {
 			sb.WriteString(`\t`)
 		default:
 			if r < 0x20 {
-				sb.WriteString(fmt.Sprintf(`\u%04x`, r))
+				fmt.Fprintf(&sb, `\u%04x`, r)
 			} else {
 				sb.WriteRune(r)
 			}
@@ -703,14 +700,11 @@ func Hash(v any) string {
 	if f, ok := v.(float64); ok {
 		return NumberToString(f)
 	}
-	if i, ok := v.(int); ok {
-		return NumberToString(float64(i))
-	}
 	str, ok := v.(string)
 	if !ok {
 		str = StableStringify(v)
 	}
-	units := utf16CodeUnits(str)
+	units := utf16.Encode([]rune(str))
 	// The original measures String#length, i.e. UTF-16 code units.
 	if len(units) < 20 {
 		return str
@@ -724,18 +718,5 @@ func Hash(v any) string {
 	if abs < 0 {
 		abs = -abs
 	}
-	return fmt.Sprintf("%d", abs)
-}
-
-func utf16CodeUnits(s string) []uint16 {
-	units := make([]uint16, 0, len(s))
-	for _, r := range s {
-		if r > 0xFFFF {
-			r -= 0x10000
-			units = append(units, uint16(0xD800+(r>>10)), uint16(0xDC00+(r&0x3FF)))
-		} else {
-			units = append(units, uint16(r))
-		}
-	}
-	return units
+	return strconv.FormatInt(abs, 10)
 }

@@ -15,8 +15,7 @@ func NewAliasTypeFormatter(childTypeFormatter TypeFormatter) *AliasTypeFormatter
 }
 
 func (f *AliasTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.AliasType)
-	return ok
+	return isType[*types.AliasType](t)
 }
 
 func (f *AliasTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

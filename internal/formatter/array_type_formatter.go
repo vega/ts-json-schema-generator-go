@@ -15,8 +15,7 @@ func NewArrayTypeFormatter(childTypeFormatter TypeFormatter) *ArrayTypeFormatter
 }
 
 func (f *ArrayTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.ArrayType)
-	return ok
+	return isType[*types.ArrayType](t)
 }
 
 func (f *ArrayTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

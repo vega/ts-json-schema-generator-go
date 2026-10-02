@@ -15,8 +15,7 @@ func NewOptionalTypeFormatter(childTypeFormatter TypeFormatter) *OptionalTypeFor
 }
 
 func (f *OptionalTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.OptionalType)
-	return ok
+	return isType[*types.OptionalType](t)
 }
 
 func (f *OptionalTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

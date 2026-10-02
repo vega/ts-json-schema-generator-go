@@ -20,8 +20,7 @@ func NewUnionTypeFormatter(childTypeFormatter TypeFormatter, discriminatorType c
 }
 
 func (f *UnionTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.UnionType)
-	return ok
+	return isType[*types.UnionType](t)
 }
 
 func (f *UnionTypeFormatter) getTypeDefinitions(unionType *types.UnionType) []*schema.Definition {
@@ -87,7 +86,7 @@ func (f *UnionTypeFormatter) getJSONSchemaDiscriminatorDefinition(unionType *typ
 
 	var duplicates []any
 	for i, item := range kindValues {
-		for j := 0; j < i; j++ {
+		for j := range i {
 			if kindValues[j] == item {
 				duplicates = append(duplicates, item)
 				break
@@ -179,5 +178,5 @@ func (f *UnionTypeFormatter) GetChildren(t types.Type) []types.Type {
 func isOnlyAnyOf(def *schema.Definition) bool {
 	check := *def
 	check.AnyOf = nil
-	return isEmptyDefinition(&check)
+	return check.IsEmpty()
 }

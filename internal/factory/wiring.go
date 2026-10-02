@@ -41,7 +41,7 @@ func CreateParser(program *compiler.Program, chk *checker.Checker, cfg *config.C
 	}
 
 	chain.
-		AddNodeParser(parser.NewHiddenNodeParser(chk)).
+		AddNodeParser(parser.NewHiddenNodeParser()).
 		AddNodeParser(parser.NewStringTypeNodeParser()).
 		AddNodeParser(parser.NewSymbolTypeNodeParser()).
 		AddNodeParser(parser.NewNumberTypeNodeParser()).
@@ -72,14 +72,14 @@ func CreateParser(program *compiler.Program, chk *checker.Checker, cfg *config.C
 		AddNodeParser(parser.NewImportTypeNodeParser(chk, chain)).
 		AddNodeParser(parser.NewExpressionWithTypeArgumentsNodeParser(chk, chain)).
 		AddNodeParser(parser.NewIndexedAccessTypeNodeParser(chk, withJsDoc(chain))).
-		AddNodeParser(parser.NewInferTypeNodeParser(chk, chain)).
+		AddNodeParser(parser.NewInferTypeNodeParser()).
 		AddNodeParser(parser.NewTypeofNodeParser(chk, chain)).
 		AddNodeParser(parser.NewMappedTypeNodeParser(chain, cfg.AdditionalProperties)).
 		AddNodeParser(parser.NewConditionalTypeNodeParser(chk, chain)).
 		AddNodeParser(parser.NewTypeOperatorNodeParser(chain)).
-		AddNodeParser(parser.NewUnionNodeParser(chk, chain)).
-		AddNodeParser(parser.NewIntersectionNodeParser(chk, chain)).
-		AddNodeParser(parser.NewTupleNodeParser(chk, chain)).
+		AddNodeParser(parser.NewUnionNodeParser(chain)).
+		AddNodeParser(parser.NewIntersectionNodeParser(chain)).
+		AddNodeParser(parser.NewTupleNodeParser(chain)).
 		AddNodeParser(parser.NewNamedTupleMemberNodeParser(chain)).
 		AddNodeParser(parser.NewOptionalTypeNodeParser(chain)).
 		AddNodeParser(parser.NewRestTypeNodeParser(chain)).

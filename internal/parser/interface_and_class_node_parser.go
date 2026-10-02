@@ -33,15 +33,7 @@ func (p *InterfaceAndClassNodeParser) SupportsNode(node *ast.Node) bool {
 func (p *InterfaceAndClassNodeParser) CreateType(node *ast.Node, context *Context, reference *types.ReferenceType) types.Type {
 	// Note: this mutates the caller's context, zipping parameter names onto
 	// the type arguments already pushed by TypeReferenceNodeParser.
-	for _, typeParam := range node.TypeParameters() {
-		nameSymbol := tsutils.GetSymbolAtLocation(p.typeChecker, typeParam.Name())
-		context.PushParameter(nameSymbol.Name)
-
-		if defaultType := typeParam.AsTypeParameterDeclaration().DefaultType; defaultType != nil {
-			t := p.childNodeParser.CreateType(defaultType, context, nil)
-			context.SetDefault(nameSymbol.Name, t)
-		}
-	}
+	pushTypeParameters(p.typeChecker, p.childNodeParser, node, context)
 
 	id := p.getTypeId(node, context)
 	if reference != nil {

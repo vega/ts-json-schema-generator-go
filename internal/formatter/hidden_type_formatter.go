@@ -11,8 +11,7 @@ type HiddenTypeFormatter struct{}
 func NewHiddenTypeFormatter() *HiddenTypeFormatter { return &HiddenTypeFormatter{} }
 
 func (f *HiddenTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.HiddenType)
-	return ok
+	return isType[*types.HiddenType](t)
 }
 
 func (f *HiddenTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

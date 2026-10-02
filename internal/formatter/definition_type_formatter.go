@@ -16,20 +16,24 @@ func NewDefinitionTypeFormatter(childTypeFormatter TypeFormatter, encodeRefs boo
 }
 
 func (f *DefinitionTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.DefinitionType)
-	return ok
+	return isType[*types.DefinitionType](t)
 }
 
 func (f *DefinitionTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
-	ref := t.(*types.DefinitionType).Name()
-	if f.encodeRefs {
-		ref = schema.EncodeRef(ref)
-	}
-	return &schema.Definition{Ref: "#/definitions/" + ref}
+	return definitionRef(t.(*types.DefinitionType).Name(), f.encodeRefs)
 }
 
 func (f *DefinitionTypeFormatter) GetChildren(t types.Type) []types.Type {
 	definitionType := t.(*types.DefinitionType)
 	children := append([]types.Type{definitionType}, f.childTypeFormatter.GetChildren(definitionType.Type)...)
 	return unique(children)
+}
+
+// definitionRef builds the $ref to a named definition, shared by the
+// definition and reference type formatters.
+func definitionRef(name string, encodeRefs bool) *schema.Definition {
+	if encodeRefs {
+		name = schema.EncodeRef(name)
+	}
+	return &schema.Definition{Ref: "#/definitions/" + name}
 }

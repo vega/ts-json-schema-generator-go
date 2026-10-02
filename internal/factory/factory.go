@@ -7,15 +7,15 @@ import (
 
 // CreateGenerator builds a SchemaGenerator from the configuration
 // (factory/generator.ts). The returned release function frees the type
-// checker and must be called when the generator is no longer needed.
+// checker and must be called when the generator is no longer needed; like
+// CreateProgram's, it is never nil.
 func CreateGenerator(cfg *config.Config) (*generator.SchemaGenerator, func(), error) {
 	if cfg == nil {
 		cfg = config.Default()
 	}
 	program, chk, release, err := CreateProgram(cfg)
 	if err != nil {
-		// Return a usable no-op release so callers can defer unconditionally.
-		return nil, func() {}, err
+		return nil, release, err
 	}
 	// Wiring panics on a malformed configuration; the checker must still be
 	// released before the panic leaves this frame.

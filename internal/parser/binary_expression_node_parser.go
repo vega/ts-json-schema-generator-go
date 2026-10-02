@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"slices"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
@@ -63,10 +65,8 @@ func (p *BinaryExpressionNodeParser) isStringLike(t types.Type) bool {
 		return typ.IsString()
 	case *types.UnionType:
 		// Any union member being string-like is enough.
-		for _, member := range typ.Types() {
-			if p.isStringLike(member) {
-				return true
-			}
+		if slices.ContainsFunc(typ.Types(), p.isStringLike) {
+			return true
 		}
 	}
 	return false

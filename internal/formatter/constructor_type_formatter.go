@@ -16,6 +16,5 @@ func NewConstructorTypeFormatter(childTypeFormatter TypeFormatter, functions con
 }
 
 func (f *ConstructorTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.ConstructorType)
-	return ok
+	return isType[*types.ConstructorType](t)
 }

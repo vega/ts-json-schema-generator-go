@@ -15,8 +15,7 @@ func NewObjectTypeFormatter(childTypeFormatter TypeFormatter) *ObjectTypeFormatt
 }
 
 func (f *ObjectTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.ObjectType)
-	return ok
+	return isType[*types.ObjectType](t)
 }
 
 func (f *ObjectTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
@@ -27,7 +26,7 @@ func (f *ObjectTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
 		return definition
 	}
 
-	reducer := GetAllOfDefinitionReducer(f.childTypeFormatter)
+	reducer := getAllOfDefinitionReducer(f.childTypeFormatter)
 	for _, baseType := range baseTypes {
 		definition = reducer(definition, baseType)
 	}

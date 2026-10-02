@@ -15,8 +15,7 @@ func NewTupleTypeFormatter(childTypeFormatter TypeFormatter) *TupleTypeFormatter
 }
 
 func (f *TupleTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.TupleType)
-	return ok
+	return isType[*types.TupleType](t)
 }
 
 func (f *TupleTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
@@ -84,10 +83,10 @@ func (f *TupleTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
 		definition := &schema.Definition{
 			Type:     "array",
 			Items:    f.childTypeFormatter.GetDefinition(firstItemType),
-			MinItems: schema.IntPtr(len(requiredElements)),
+			MinItems: new(len(requiredElements)),
 		}
 		if restType == nil {
-			definition.MaxItems = schema.IntPtr(len(requiredElements) + len(optionalElements))
+			definition.MaxItems = new(len(requiredElements) + len(optionalElements))
 		}
 		return definition
 	}
@@ -109,7 +108,7 @@ func (f *TupleTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
 
 	definition := &schema.Definition{
 		Type:     "array",
-		MinItems: schema.IntPtr(len(requiredDefinitions)),
+		MinItems: new(len(requiredDefinitions)),
 	}
 	switch {
 	case itemsTotal > 0:
@@ -117,14 +116,14 @@ func (f *TupleTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
 	case additionalItems != nil:
 		definition.Items = additionalItems // with only rest param
 	default:
-		definition.MaxItems = schema.IntPtr(0) // empty
+		definition.MaxItems = new(0) // empty
 	}
 	if additionalItems != nil {
 		if !isArrayValue(additionalItems) && itemsTotal > 0 {
 			definition.AdditionalItems = additionalItems // with rest items
 		}
 	} else if itemsTotal > 0 {
-		definition.MaxItems = schema.IntPtr(itemsTotal) // without rest
+		definition.MaxItems = new(itemsTotal) // without rest
 	}
 
 	return definition

@@ -7,20 +7,14 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
-// GetAllOfDefinitionReducer folds a base type's definition into the given
+// getAllOfDefinitionReducer folds a base type's definition into the given
 // definition, combining objects instead of using allOf because allOf does not
 // work well with additional properties (src/Utils/allOfDefinition.ts).
-func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.Definition, types.Type) *schema.Definition {
+func getAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.Definition, types.Type) *schema.Definition {
 	return func(definition *schema.Definition, baseType types.Type) *schema.Definition {
 		other := childTypeFormatter.GetDefinition(types.DerefType(baseType))
 
 		definition.Properties = deepMergeProperties(other.Properties, definition.Properties)
-
-		// additionalPropsDefinition in the TypeScript source: anything that is
-		// neither undefined nor true (i.e. false or a definition).
-		isPropsDefinition := func(props any) bool {
-			return props != nil && props != true
-		}
 
 		if isPropsDefinition(definition.AdditionalProperties) && isPropsDefinition(other.AdditionalProperties) {
 			// Additional properties is false only if all children also set
@@ -65,7 +59,7 @@ func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.De
 			if len(additionalProps) > 1 {
 				definition.AdditionalProperties = &schema.Definition{AnyOf: additionalProps}
 			} else if len(additionalProps) == 1 {
-				if isEmptyDefinition(additionalProps[0]) {
+				if additionalProps[0].IsEmpty() {
 					definition.AdditionalProperties = nil
 				} else {
 					definition.AdditionalProperties = additionalProps[0]
@@ -81,7 +75,7 @@ func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.De
 			definition.Required = required
 		}
 
-		if isTruthyOrUndefined(other.AdditionalProperties) && definition.AdditionalProperties == false {
+		if other.AdditionalProperties != false && definition.AdditionalProperties == false {
 			definition.AdditionalProperties = nil
 		}
 
@@ -95,22 +89,15 @@ func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.De
 func deepMergeProperties(a, b *schema.Properties) *schema.Properties {
 	out := schema.NewProperties()
 	if a != nil {
-		for _, k := range a.Keys() {
-			v, _ := a.Get(k)
-			out.Set(k, v)
-		}
+		out = a.Clone()
 	}
-	if b != nil {
-		for _, k := range b.Keys() {
-			v, _ := b.Get(k)
-			out.Set(k, v)
-		}
+	for k, v := range b.All() {
+		out.Set(k, v)
 	}
 	if a == nil || b == nil {
 		return out
 	}
-	for _, k := range a.Keys() {
-		av, _ := a.Get(k)
+	for k, av := range a.All() {
 		bv, ok := b.Get(k)
 		if !ok || av == nil || bv == nil || av.Type == nil || bv.Type == nil {
 			continue
@@ -124,7 +111,7 @@ func deepMergeProperties(a, b *schema.Properties) *schema.Properties {
 		}
 		merged := bv.Clone()
 		if len(enums) == 1 {
-			merged.Const = schema.Ptr(enums[0])
+			merged.Const = new(enums[0])
 			merged.Enum = nil
 		} else {
 			merged.Enum = enums
@@ -207,27 +194,8 @@ func castTypeArray(t any) []string {
 	return nil
 }
 
-// isEmptyDefinition reports whether the definition has no keys set
-// (`Object.keys(def).length === 0` in the TypeScript source).
-func isEmptyDefinition(d *schema.Definition) bool {
-	return d.ID == "" && d.Schema == "" && d.Ref == "" && d.Comment == "" && d.Title == "" &&
-		d.Type == nil && d.Format == "" && d.Enum == nil && d.Const == nil && d.Not == nil &&
-		d.AllOf == nil && d.AnyOf == nil && d.OneOf == nil && d.If == nil && d.Then == nil &&
-		d.Else == nil && d.Items == nil && d.MinItems == nil && d.MaxItems == nil &&
-		d.AdditionalItems == nil && d.Properties.Len() == 0 && len(d.Required) == 0 &&
-		d.AdditionalProperties == nil && d.PatternProperties == nil && d.PropertyNames == nil &&
-		d.Discriminator == nil && d.Definitions == nil && len(d.Extra) == 0
-}
-
-// isTruthyOrUndefined mirrors `props || props === undefined` for
-// additionalProperties values (undefined, bool, or definition).
-func isTruthyOrUndefined(props any) bool {
-	if props == nil {
-		return true
-	}
-	if b, ok := props.(bool); ok {
-		return b
-	}
-	// A definition object is truthy.
-	return true
+// isPropsDefinition mirrors additionalPropsDefinition in the TypeScript
+// source: anything that is neither undefined nor true (false or a definition).
+func isPropsDefinition(props any) bool {
+	return props != nil && props != true
 }

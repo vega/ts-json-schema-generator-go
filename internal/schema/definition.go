@@ -6,7 +6,10 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"iter"
+	"maps"
 	"math"
+	"slices"
 	"sort"
 )
 
@@ -55,12 +58,6 @@ type Definition struct {
 	Extra map[string]any
 }
 
-// Ptr wraps a value for assignment to *any fields such as Const.
-func Ptr(v any) *any { return &v }
-
-// IntPtr wraps an int for assignment to *int fields.
-func IntPtr(v int) *int { return &v }
-
 // SetExtra sets an annotation keyword on the definition.
 func (d *Definition) SetExtra(key string, value any) {
 	if d.Extra == nil {
@@ -75,10 +72,8 @@ func (d *Definition) HasType(name string) bool {
 	case string:
 		return t == name
 	case []string:
-		for _, s := range t {
-			if s == name {
-				return true
-			}
+		if slices.Contains(t, name) {
+			return true
 		}
 	case []any:
 		for _, s := range t {
@@ -88,6 +83,18 @@ func (d *Definition) HasType(name string) bool {
 		}
 	}
 	return false
+}
+
+// IsEmpty reports whether the definition has no keys set
+// (`Object.keys(def).length === 0` in the TypeScript source).
+func (d *Definition) IsEmpty() bool {
+	return d.ID == "" && d.Schema == "" && d.Ref == "" && d.Comment == "" && d.Title == "" &&
+		d.Type == nil && d.Format == "" && d.Enum == nil && d.Const == nil && d.Not == nil &&
+		d.AllOf == nil && d.AnyOf == nil && d.OneOf == nil && d.If == nil && d.Then == nil &&
+		d.Else == nil && d.Items == nil && d.MinItems == nil && d.MaxItems == nil &&
+		d.AdditionalItems == nil && d.Properties.Len() == 0 && len(d.Required) == 0 &&
+		d.AdditionalProperties == nil && d.PatternProperties == nil && d.PropertyNames == nil &&
+		d.Discriminator == nil && d.Definitions == nil && len(d.Extra) == 0
 }
 
 // Properties is an insertion-ordered map of property name to definition.
@@ -113,6 +120,31 @@ func (p *Properties) Get(key string) (*Definition, bool) {
 }
 
 func (p *Properties) Keys() []string { return p.keys }
+
+// All iterates over the properties in insertion order. A nil Properties
+// yields nothing.
+func (p *Properties) All() iter.Seq2[string, *Definition] {
+	return func(yield func(string, *Definition) bool) {
+		if p == nil {
+			return
+		}
+		for _, k := range p.keys {
+			if !yield(k, p.values[k]) {
+				return
+			}
+		}
+	}
+}
+
+// Clone returns a copy of the properties that shares the definitions.
+func (p *Properties) Clone() *Properties {
+	c := &Properties{
+		keys:   append([]string(nil), p.keys...),
+		values: make(map[string]*Definition, len(p.values)),
+	}
+	maps.Copy(c.values, p.values)
+	return c
+}
 
 func (p *Properties) Len() int {
 	if p == nil {
@@ -302,18 +334,11 @@ func (s sortedMapT) MarshalJSON() ([]byte, error) {
 func (d *Definition) Clone() *Definition {
 	c := *d
 	if d.Properties != nil {
-		p := NewProperties()
-		for _, k := range d.Properties.Keys() {
-			v, _ := d.Properties.Get(k)
-			p.Set(k, v)
-		}
-		c.Properties = p
+		c.Properties = d.Properties.Clone()
 	}
 	if d.Extra != nil {
 		c.Extra = make(map[string]any, len(d.Extra))
-		for k, v := range d.Extra {
-			c.Extra[k] = v
-		}
+		maps.Copy(c.Extra, d.Extra)
 	}
 	c.Required = append([]string(nil), d.Required...)
 	c.Enum = append([]any(nil), d.Enum...)

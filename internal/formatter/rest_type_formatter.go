@@ -15,8 +15,7 @@ func NewRestTypeFormatter(childTypeFormatter TypeFormatter) *RestTypeFormatter {
 }
 
 func (f *RestTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.RestType)
-	return ok
+	return isType[*types.RestType](t)
 }
 
 func (f *RestTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

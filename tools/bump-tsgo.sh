@@ -34,7 +34,7 @@ if [ -z "$ref" ]; then
 fi
 
 echo "Resolving ${TSGO_MODULE}@${ref}..."
-version=$(go list -m -json "${TSGO_MODULE}@${ref}" | go run ./tools/internal/jsonfield Version)
+version=$(go list -m -f '{{.Version}}' "${TSGO_MODULE}@${ref}")
 echo "Pinning ${version}"
 
 for mod in shim/*/go.mod shim/vfs/*/go.mod; do

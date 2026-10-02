@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -47,17 +48,11 @@ func (c *Context) SetDefault(parameterName string, argumentType types.Type) {
 
 func (c *Context) CacheKey() string {
 	if c.cacheKey == "" {
-		ids := make([]string, len(c.arguments))
-		for i, arg := range c.arguments {
-			if arg != nil {
-				ids[i] = arg.ID()
-			}
-		}
 		ref := ""
 		if c.reference != nil {
 			ref = GetNodeKey(c.reference, c)
 		}
-		c.cacheKey = fmt.Sprintf("[%q,[%s]]", ref, strings.Join(ids, ","))
+		c.cacheKey = fmt.Sprintf("[%q,[%s]]", ref, joinTypes(c.arguments, types.Type.ID))
 	}
 	return c.cacheKey
 }
@@ -83,7 +78,6 @@ func (c *Context) GetArgument(parameterName string) types.Type {
 
 func (c *Context) Parameters() []string    { return c.parameters }
 func (c *Context) Arguments() []types.Type { return c.arguments }
-func (c *Context) Reference() *ast.Node    { return c.reference }
 
 // NodeParser creates a type from an AST node. reference is non-nil when the
 // node is being parsed to back a circular ReferenceType.
@@ -158,7 +152,7 @@ func GetNodeKey(node *ast.Node, ctx *Context) string {
 				hashedSource = source
 				fileHash = types.Hash(nodeKeyFileName(source.FileName()))
 			}
-			ids = append(ids, fileHash, fmt.Sprintf("%d", node.Pos()), fmt.Sprintf("%d", node.End()))
+			ids = append(ids, fileHash, strconv.Itoa(node.Pos()), strconv.Itoa(node.End()))
 		}
 		node = node.Parent
 	}
@@ -167,11 +161,5 @@ func GetNodeKey(node *ast.Node, ctx *Context) string {
 	if len(args) == 0 {
 		return id
 	}
-	argIDs := make([]string, len(args))
-	for i, arg := range args {
-		if arg != nil {
-			argIDs[i] = arg.ID()
-		}
-	}
-	return id + "<" + strings.Join(argIDs, ",") + ">"
+	return id + "<" + joinTypes(args, types.Type.ID) + ">"
 }

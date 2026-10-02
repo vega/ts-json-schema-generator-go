@@ -11,8 +11,7 @@ type VoidTypeFormatter struct{}
 func NewVoidTypeFormatter() *VoidTypeFormatter { return &VoidTypeFormatter{} }
 
 func (f *VoidTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.VoidType)
-	return ok
+	return isType[*types.VoidType](t)
 }
 
 func (f *VoidTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

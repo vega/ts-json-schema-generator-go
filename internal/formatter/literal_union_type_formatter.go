@@ -75,27 +75,20 @@ func (f *LiteralUnionTypeFormatter) GetDefinition(t types.Type) *schema.Definiti
 		case *types.EnumType:
 			for _, value := range member.Values {
 				appendName(typeName(value))
-			}
-		case *types.LiteralType:
-			appendName(typeName(member.Value))
-		default:
-			appendName("null")
-		}
-		switch member := item.(type) {
-		case *types.EnumType:
-			for _, value := range member.Values {
 				appendValue(value)
 			}
 		case *types.LiteralType:
+			appendName(typeName(member.Value))
 			appendValue(member.Value)
 		default:
+			appendName("null")
 			appendValue(nil)
 		}
 	}
 
 	var definition *schema.Definition
 	if len(typeNames) == 1 && len(typeValues) == 1 {
-		definition = &schema.Definition{Type: toEnumType(typeNames), Const: schema.Ptr(typeValues[0])}
+		definition = &schema.Definition{Type: toEnumType(typeNames), Const: new(typeValues[0])}
 	} else {
 		definition = &schema.Definition{Type: toEnumType(typeNames), Enum: typeValues}
 	}

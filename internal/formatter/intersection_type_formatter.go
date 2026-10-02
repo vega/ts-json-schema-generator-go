@@ -15,8 +15,7 @@ func NewIntersectionTypeFormatter(childTypeFormatter TypeFormatter) *Intersectio
 }
 
 func (f *IntersectionTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.IntersectionType)
-	return ok
+	return isType[*types.IntersectionType](t)
 }
 
 func (f *IntersectionTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
@@ -38,7 +37,7 @@ func (f *IntersectionTypeFormatter) GetDefinition(t types.Type) *schema.Definiti
 
 	if len(nonArrayLikeTypes) > 0 {
 		// There are non-array (mergeable) requirements.
-		reducer := GetAllOfDefinitionReducer(f.childTypeFormatter)
+		reducer := getAllOfDefinitionReducer(f.childTypeFormatter)
 		merged := &schema.Definition{Type: "object", AdditionalProperties: false}
 		for _, member := range nonArrayLikeTypes {
 			merged = reducer(merged, member)

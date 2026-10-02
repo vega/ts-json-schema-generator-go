@@ -34,6 +34,5 @@ func (p *NamedTupleMemberNodeParser) CreateType(node *ast.Node, ctx *Context, re
 	return &types.AnnotatedType{
 		Type:        baseType,
 		Annotations: types.Annotations{"title": member.Name().Text()},
-		Nullable:    false,
 	}
 }

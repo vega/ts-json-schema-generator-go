@@ -62,16 +62,11 @@ func checkerLiteralValue(t *checker.Type) any {
 		return nil
 	}
 	if t.Flags()&(checker.TypeFlagsStringLiteral|checker.TypeFlagsNumberLiteral) != 0 {
-		switch v := t.AsLiteralType().Value().(type) {
-		case string:
-			return v
-		case jsnum.Number:
-			return float64(v)
-		case bool:
-			return v
-		default:
-			return v
+		value := t.AsLiteralType().Value()
+		if number, isNumber := value.(jsnum.Number); isNumber {
+			return float64(number)
 		}
+		return value
 	}
 	return nil
 }

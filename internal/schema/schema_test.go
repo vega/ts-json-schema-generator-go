@@ -2,8 +2,83 @@ package schema
 
 import (
 	"math"
+	"reflect"
 	"testing"
 )
+
+func TestDefinitionIsEmpty(t *testing.T) {
+	if !(&Definition{}).IsEmpty() {
+		t.Fatal("zero Definition is not empty")
+	}
+	if !(&Definition{Properties: NewProperties()}).IsEmpty() {
+		t.Error("Definition with empty Properties is not empty")
+	}
+
+	fields := reflect.TypeFor[Definition]()
+	for i := range fields.NumField() {
+		field := fields.Field(i)
+		t.Run(field.Name, func(t *testing.T) {
+			var def Definition
+			reflect.ValueOf(&def).Elem().Field(i).Set(nonEmptyValue(field.Type))
+			if def.IsEmpty() {
+				t.Errorf("IsEmpty() = true with %s set", field.Name)
+			}
+		})
+	}
+}
+
+func TestPropertiesCloneAndAll(t *testing.T) {
+	a, b := &Definition{Type: "string"}, &Definition{Type: "number"}
+	props := NewProperties()
+	props.Set("b", a)
+	props.Set("a", b)
+
+	clone := props.Clone()
+	clone.Set("c", a)
+	if props.Len() != 2 || clone.Len() != 3 {
+		t.Fatalf("Clone shares state: original %d keys, clone %d keys", props.Len(), clone.Len())
+	}
+
+	var keys []string
+	for k, v := range clone.All() {
+		if got, _ := clone.Get(k); got != v {
+			t.Errorf("All yielded %q -> %v, Get returns %v", k, v, got)
+		}
+		keys = append(keys, k)
+	}
+	if want := []string{"b", "a", "c"}; !reflect.DeepEqual(keys, want) {
+		t.Errorf("All order = %v, want %v", keys, want)
+	}
+
+	var nilProps *Properties
+	for k := range nilProps.All() {
+		t.Errorf("nil Properties yielded %q", k)
+	}
+}
+
+// nonEmptyValue returns a value of type t that counts as a set key.
+func nonEmptyValue(t reflect.Type) reflect.Value {
+	if t == reflect.TypeFor[*Properties]() {
+		props := NewProperties()
+		props.Set("a", &Definition{})
+		return reflect.ValueOf(props)
+	}
+	switch t.Kind() {
+	case reflect.String:
+		return reflect.ValueOf("x").Convert(t)
+	case reflect.Interface:
+		return reflect.ValueOf("x")
+	case reflect.Pointer:
+		return reflect.New(t.Elem())
+	case reflect.Slice:
+		return reflect.Append(reflect.MakeSlice(t, 0, 1), reflect.Zero(t.Elem()))
+	case reflect.Map:
+		m := reflect.MakeMap(t)
+		m.SetMapIndex(reflect.ValueOf("a").Convert(t.Key()), reflect.Zero(t.Elem()))
+		return m
+	}
+	panic("nonEmptyValue: unsupported field kind " + t.Kind().String())
+}
 
 func TestEncodeRef(t *testing.T) {
 	// Matches encodeURIComponent: A-Za-z0-9 -_.!~*'() unescaped.
@@ -58,7 +133,7 @@ func TestDefinitionMarshal(t *testing.T) {
 // patternProperties, Extra) must keep <, > and & literal, like JSON.stringify.
 func TestMarshalStableUnsortedDoesNotEscapeHTML(t *testing.T) {
 	props := NewProperties()
-	props.Set("<b>", &Definition{Type: "string", Const: Ptr("<a>")})
+	props.Set("<b>", &Definition{Type: "string", Const: new(any("<a>"))})
 	props.Set("a&b", &Definition{Enum: []any{"x>y", 1.0}})
 	def := &Definition{
 		Ref: "#/definitions/T%3CU%3E",
@@ -113,7 +188,7 @@ func TestDefinitionMarshalNonFiniteNumbers(t *testing.T) {
 	// reaches the schema as +Inf.
 	def := &Definition{
 		Type:  "number",
-		Const: Ptr(math.Inf(1)),
+		Const: new(any(math.Inf(1))),
 		Enum:  []any{math.Inf(-1), math.NaN(), 1.5},
 	}
 	def.SetExtra("examples", []any{math.Inf(1), map[string]any{"n": math.NaN()}})
@@ -131,7 +206,7 @@ func TestDefinitionMarshalNonFiniteNumbers(t *testing.T) {
 
 func TestDefinitionMarshalNegativeZero(t *testing.T) {
 	// JSON.stringify(-0) is "0".
-	def := &Definition{Const: Ptr(math.Copysign(0, -1))}
+	def := &Definition{Const: new(any(math.Copysign(0, -1)))}
 	got, err := MarshalStable(def, false, true)
 	if err != nil {
 		t.Fatal(err)

@@ -112,7 +112,9 @@ func (p *ConditionalTypeNodeParser) createSubContext(node *ast.Node, parentConte
 		subContext.PushArgument(value)
 	}
 
+	skip := ""
 	if checkType != nil {
+		skip = checkType.parameterName
 		// Set the new narrowed type for the check type parameter.
 		// Note: the upstream implementation guards this with
 		// `!(checkType.parameterName in inferMap)`, but `in` on a JavaScript
@@ -125,13 +127,7 @@ func (p *ConditionalTypeNodeParser) createSubContext(node *ast.Node, parentConte
 	}
 
 	// Copy all other type parameters from the parent context.
-	for _, parentParameter := range parentContext.Parameters() {
-		if checkType != nil && parentParameter == checkType.parameterName {
-			continue
-		}
-		subContext.PushParameter(parentParameter)
-		subContext.PushArgument(parentContext.GetArgument(parentParameter))
-	}
+	inheritParameters(subContext, parentContext, skip)
 
 	return subContext
 }

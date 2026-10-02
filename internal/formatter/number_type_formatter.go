@@ -11,8 +11,7 @@ type NumberTypeFormatter struct{}
 func NewNumberTypeFormatter() *NumberTypeFormatter { return &NumberTypeFormatter{} }
 
 func (f *NumberTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.NumberType)
-	return ok
+	return isType[*types.NumberType](t)
 }
 
 func (f *NumberTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

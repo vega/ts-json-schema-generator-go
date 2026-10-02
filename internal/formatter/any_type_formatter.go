@@ -11,8 +11,7 @@ type AnyTypeFormatter struct{}
 func NewAnyTypeFormatter() *AnyTypeFormatter { return &AnyTypeFormatter{} }
 
 func (f *AnyTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.AnyType)
-	return ok
+	return isType[*types.AnyType](t)
 }
 
 func (f *AnyTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

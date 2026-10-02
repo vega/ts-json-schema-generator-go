@@ -21,10 +21,5 @@ func (p *ArrayLiteralExpressionNodeParser) SupportsNode(node *ast.Node) bool {
 }
 
 func (p *ArrayLiteralExpressionNodeParser) CreateType(node *ast.Node, ctx *Context, _ *types.ReferenceType) types.Type {
-	elements := node.AsArrayLiteralExpression().Elements.Nodes
-	memberTypes := make([]types.Type, len(elements))
-	for i, element := range elements {
-		memberTypes[i] = p.childNodeParser.CreateType(element, ctx, nil)
-	}
-	return types.NewTupleType(memberTypes)
+	return types.NewTupleType(createTypes(p.childNodeParser, node.AsArrayLiteralExpression().Elements.Nodes, ctx))
 }
