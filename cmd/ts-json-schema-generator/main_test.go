@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -254,6 +255,70 @@ func readJSON(t *testing.T, path string) any {
 func truncate(data []byte) string {
 	if len(data) > 200 {
 		return string(data[:200]) + "..."
+	}
+	return string(data)
+}
+
+// TestFlagErrorExitCodes checks main's contract for flag handling: -h and
+// --help exit 0 after the usage text, and a bad flag exits 2 with its error
+// printed exactly once (by the flag package, not again by main).
+func TestFlagErrorExitCodes(t *testing.T) {
+	cases := []struct {
+		name     string
+		args     []string
+		wantCode int
+		wantOnce string
+	}{
+		{"short help", []string{"-h"}, 0, "Usage of ts-json-schema-generator"},
+		{"long help", []string{"--help"}, 0, "Usage of ts-json-schema-generator"},
+		{"unknown flag", []string{"--bogus"}, 2, "flag provided but not defined: -bogus"},
+		{"bad value", []string{"--minify=maybe"}, 2, `invalid boolean value "maybe" for -minify`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var code int
+			stderr := captureStderr(t, func() {
+				code = exitCode(run(tc.args), os.Stderr)
+			})
+			if code != tc.wantCode {
+				t.Errorf("exit code = %d, want %d", code, tc.wantCode)
+			}
+			if n := strings.Count(stderr, tc.wantOnce); n != 1 {
+				t.Errorf("stderr contains %q %d times, want once:\n%s", tc.wantOnce, n, stderr)
+			}
+			if strings.Contains(stderr, "Error:") {
+				t.Errorf("stderr has an extra error line:\n%s", stderr)
+			}
+		})
+	}
+}
+
+func TestExitCodeReportsOtherErrors(t *testing.T) {
+	var stderr strings.Builder
+	if code := exitCode(errors.New("boom"), &stderr); code != 1 {
+		t.Errorf("exit code = %d, want 1", code)
+	}
+	if got := stderr.String(); got != "Error: boom\n" {
+		t.Errorf("stderr = %q, want %q", got, "Error: boom\n")
+	}
+}
+
+// captureStderr returns what fn writes to os.Stderr, which the flag package
+// uses when no output is set.
+func captureStderr(t *testing.T, fn func()) string {
+	t.Helper()
+	file, err := os.CreateTemp(t.TempDir(), "stderr")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	original := os.Stderr
+	os.Stderr = file
+	defer func() { os.Stderr = original }()
+	fn()
+	data, err := os.ReadFile(file.Name())
+	if err != nil {
+		t.Fatal(err)
 	}
 	return string(data)
 }

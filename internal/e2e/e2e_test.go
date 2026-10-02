@@ -22,6 +22,20 @@ import (
 
 var repoRoot = testutil.RepoRoot
 
+// requireNpmSources skips the test when an npm-installed source file is
+// missing, except in CI (CI env var set), where a missing file means
+// `npm ci` failed and the test must fail instead of passing silently.
+func requireNpmSources(t *testing.T, path string) {
+	t.Helper()
+	if _, err := os.Stat(path); err != nil {
+		msg := fmt.Sprintf("npm sources not installed (run npm ci): %v", err)
+		if os.Getenv("CI") != "" {
+			t.Fatal(msg)
+		}
+		t.Skip(msg)
+	}
+}
+
 func TestMain(m *testing.M) {
 	testutil.ChdirRepoRoot()
 	os.Exit(m.Run())

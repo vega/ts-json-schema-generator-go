@@ -139,10 +139,14 @@ Deliberate and documented in commit history:
 ## Downstream regression tests
 
 - `internal/e2e/vegalite_test.go` — full vega-lite schema (sources from npm).
-- `internal/e2e/mosaic_test.go` — Mosaic/vgplot spec schema from the vendored
-  `test/mosaic` snapshot, using mosaic's own CLI invocation; CSSStyles
+- `internal/e2e/mosaic_test.go` — Mosaic/vgplot spec schema from the
+  `@uwdata/mosaic-spec` npm package, using mosaic's own CLI invocation and
+  compared with the package's published `dist/mosaic-schema.json`; CSSStyles
   properties are compared as a superset because they track the lib.dom
   version.
+
+Both read sources from `node_modules`. Locally they skip when those are
+missing; with `CI` set they fail, so a broken `npm ci` cannot pass silently.
 
 ## Development workflow
 

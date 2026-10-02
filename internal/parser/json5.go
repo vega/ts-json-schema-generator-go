@@ -9,18 +9,22 @@ import (
 	"unicode/utf8"
 )
 
-// ParseJSON5 parses a JSON5-subset document: JSON values, single-quoted
+// parseJSON5 parses a JSON5-subset document: JSON values, single-quoted
 // strings, unquoted object keys, trailing commas, Infinity/-Infinity/NaN,
 // hex numbers, and comments. Numbers are returned as float64, objects as
 // map[string]any, and arrays as []any.
-func ParseJSON5(s string) (any, error) {
+func parseJSON5(s string) (any, error) {
 	p := &json5Parser{input: s}
-	p.skipIgnored()
+	if err := p.skipIgnored(); err != nil {
+		return nil, err
+	}
 	value, err := p.parseValue()
 	if err != nil {
 		return nil, err
 	}
-	p.skipIgnored()
+	if err := p.skipIgnored(); err != nil {
+		return nil, err
+	}
 	if p.pos < len(p.input) {
 		return nil, p.errorf("unexpected character %q after value", p.peekRune())
 	}

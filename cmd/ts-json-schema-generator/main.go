@@ -7,6 +7,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"slices"
@@ -34,9 +35,30 @@ func (l *stringList) Set(value string) error {
 }
 
 func main() {
-	if err := run(os.Args[1:]); err != nil {
-		fmt.Fprintln(os.Stderr, "Error:", err)
-		os.Exit(1)
+	os.Exit(exitCode(run(os.Args[1:]), os.Stderr))
+}
+
+// flagParseError is a command-line parse error that the flag package has
+// already reported, together with the usage text.
+type flagParseError struct{ err error }
+
+func (e flagParseError) Error() string { return e.err.Error() }
+
+func (e flagParseError) Unwrap() error { return e.err }
+
+// exitCode reports err on stderr unless the flag package already did, and
+// returns the process exit status: 0 for success and -h/--help, 2 for a
+// flag parse error (the flag package convention), 1 for anything else.
+func exitCode(err error, stderr io.Writer) int {
+	var parseErr flagParseError
+	switch {
+	case err == nil, errors.Is(err, flag.ErrHelp):
+		return 0
+	case errors.As(err, &parseErr):
+		return 2
+	default:
+		fmt.Fprintln(stderr, "Error:", err)
+		return 1
 	}
 }
 
@@ -95,7 +117,7 @@ func run(args []string) error {
 	flags.BoolVar(&showVersion, "version", false, "Print the version and exit")
 
 	if err := flags.Parse(args); err != nil {
-		return err
+		return flagParseError{err}
 	}
 	if rest := flags.Args(); len(rest) > 0 {
 		return fmt.Errorf("unexpected argument %q (flags must precede values; repeat --type for multiple types)", rest[0])

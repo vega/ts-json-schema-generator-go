@@ -129,7 +129,7 @@ func (r *BasicAnnotationsReader) parseJSDocTag(jsDocTag jsDocTagInfo) (any, bool
 		// Unknown jsDoc tag.
 		return nil, false
 	}
-	if parsed, err := ParseJSON5(text); err == nil {
+	if parsed, err := parseJSON5(text); err == nil {
 		return parsed, true
 	}
 	return text, true
