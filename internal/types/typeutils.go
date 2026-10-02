@@ -201,19 +201,6 @@ func Translate(memberTypes []Type) Type {
 // ---------------------------------------------------------------------------
 // Type keys (src/Utils/typeKeys.ts)
 
-func uniqueLiterals(literals []*LiteralType) []*LiteralType {
-	seen := map[string]bool{}
-	var out []*LiteralType
-	for _, l := range literals {
-		key := StableStringify(l.Value)
-		if !seen[key] {
-			seen[key] = true
-			out = append(out, l)
-		}
-	}
-	return out
-}
-
 // GetTypeKeys returns the literal keys of a type.
 func GetTypeKeys(t Type) []*LiteralType {
 	switch d := DerefType(t).(type) {
@@ -235,7 +222,7 @@ func GetTypeKeys(t Type) []*LiteralType {
 		for _, parent := range d.BaseTypes {
 			keys = append(keys, GetTypeKeys(parent)...)
 		}
-		return uniqueLiterals(keys)
+		return UniqueTypes(keys)
 	}
 	return nil
 }
@@ -245,7 +232,7 @@ func getCompositeTypeKeys(memberTypes []Type) []*LiteralType {
 	for _, sub := range memberTypes {
 		keys = append(keys, GetTypeKeys(sub)...)
 	}
-	return uniqueLiterals(keys)
+	return UniqueTypes(keys)
 }
 
 // GetTypeByKey resolves the type of the property named by index (a
@@ -275,31 +262,19 @@ func GetTypeByKey(t Type, index Type) Type {
 		if lit, ok := index.(*LiteralType); ok {
 			// Strict equality in the original: only string literals can
 			// match property names.
-			name, isString := lit.Value.(string)
-			for _, p := range d.Properties {
-				if isString && p.Name() == name {
-					propertyType := p.Type
-					if propertyType == nil {
+			if name, isString := lit.Value.(string); isString {
+				for _, p := range d.Properties {
+					if p.Name() != name {
+						continue
+					}
+					if p.Type == nil {
 						return nil
 					}
-					newPropType := DerefAnnotatedType(propertyType)
+					newPropType := DerefAnnotatedType(p.Type)
 					if !p.Required {
-						if union, ok := newPropType.(*UnionType); ok {
-							hasUndefined := false
-							for _, sub := range union.Types() {
-								if _, ok := sub.(*UndefinedType); ok {
-									hasUndefined = true
-									break
-								}
-							}
-							if !hasUndefined {
-								newPropType = NewUnionType(append(append([]Type(nil), union.Types()...), &UndefinedType{}))
-							}
-						} else {
-							newPropType = NewUnionType([]Type{newPropType, &UndefinedType{}})
-						}
+						newPropType = optionalPropertyType(newPropType)
 					}
-					return PreserveAnnotation(propertyType, newPropType)
+					return PreserveAnnotation(p.Type, newPropType)
 				}
 			}
 		}
@@ -321,35 +296,39 @@ func GetTypeByKey(t Type, index Type) Type {
 	return nil
 }
 
+// optionalPropertyType adds undefined to the type of an optional property
+// unless it is already a union that includes undefined.
+func optionalPropertyType(t Type) Type {
+	union, ok := t.(*UnionType)
+	if !ok {
+		return NewUnionType([]Type{t, &UndefinedType{}})
+	}
+	for _, sub := range union.Types() {
+		if _, ok := sub.(*UndefinedType); ok {
+			return union
+		}
+	}
+	return NewUnionType(append(append([]Type(nil), union.Types()...), &UndefinedType{}))
+}
+
 func getCompositeTypeByKey(composite Type, memberTypes []Type, index Type) Type {
 	var subTypes []Type
-	var firstType Type
 	for _, sub := range memberTypes {
 		if subKeyType := GetTypeByKey(sub, index); subKeyType != nil {
 			subTypes = append(subTypes, subKeyType)
-			if firstType == nil {
-				firstType = subKeyType
-			}
 		}
 	}
 	subTypes = UniqueTypes(subTypes)
 
-	var returnType Type
-	switch {
-	case len(subTypes) == 1:
-		return firstType
-	case len(subTypes) > 1:
-		if _, isUnion := composite.(*UnionType); isUnion {
-			returnType = NewUnionType(subTypes)
-		} else {
-			returnType = Translate(subTypes)
-		}
-	}
-	if returnType == nil {
+	switch len(subTypes) {
+	case 0:
 		return nil
+	case 1:
+		return subTypes[0]
 	}
-	if firstType == nil {
-		return returnType
+	firstType := subTypes[0]
+	if _, isUnion := composite.(*UnionType); isUnion {
+		return PreserveAnnotation(firstType, NewUnionType(subTypes))
 	}
-	return PreserveAnnotation(firstType, returnType)
+	return PreserveAnnotation(firstType, Translate(subTypes))
 }
