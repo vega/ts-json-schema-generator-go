@@ -65,7 +65,8 @@ func TestCreateProgramNoInputFiles(t *testing.T) {
 	cfg := config.Default()
 	cfg.Path = filepath.Join(testutil.RepoRoot(t), "test", "valid-data", "type-union", "*.does-not-exist")
 
-	_, _, _, err := CreateProgram(cfg)
+	_, _, release, err := CreateProgram(cfg)
+	defer release()
 	if err == nil || !strings.Contains(err.Error(), "no input files") {
 		t.Fatalf("expected 'no input files' error, got %v", err)
 	}

@@ -25,13 +25,18 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/config"
 )
 
+// noRelease is the release function returned on error, so callers can always
+// defer it.
+func noRelease() {}
+
 // CreateProgram builds a bound typescript-go Program and type checker from
 // the configuration (factory/program.ts). The returned release function must
-// be called when the checker is no longer needed.
+// be called when the checker is no longer needed; it is never nil, so callers
+// can defer it unconditionally.
 func CreateProgram(cfg *config.Config) (*compiler.Program, *checker.Checker, func(), error) {
 	cwd, err := os.Getwd()
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, noRelease, err
 	}
 	cwd = tspath.NormalizePath(cwd)
 
@@ -40,12 +45,12 @@ func CreateProgram(cfg *config.Config) (*compiler.Program, *checker.Checker, fun
 
 	rootNamesFromPath, err := expandPath(cfg.Path, cwd)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, noRelease, err
 	}
 
 	parsed, err := getTsConfig(cfg, cwd, host)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, noRelease, err
 	}
 
 	rootNames := rootNamesFromPath
@@ -53,7 +58,7 @@ func CreateProgram(cfg *config.Config) (*compiler.Program, *checker.Checker, fun
 		rootNames = parsed.FileNames()
 	}
 	if len(rootNames) == 0 {
-		return nil, nil, nil, errors.New("no input files")
+		return nil, nil, noRelease, errors.New("no input files")
 	}
 
 	// The program takes its root files from the ParsedCommandLine; rebuild it
@@ -79,7 +84,7 @@ func CreateProgram(cfg *config.Config) (*compiler.Program, *checker.Checker, fun
 		diagnostics = append(diagnostics, program.GetSyntacticDiagnostics(ctx, nil)...)
 		diagnostics = append(diagnostics, program.GetSemanticDiagnostics(ctx, nil)...)
 		if len(diagnostics) > 0 {
-			return nil, nil, nil, fmt.Errorf("type check error:\n%s", formatDiagnostics(diagnostics))
+			return nil, nil, noRelease, fmt.Errorf("type check error:\n%s", formatDiagnostics(diagnostics))
 		}
 	}
 
