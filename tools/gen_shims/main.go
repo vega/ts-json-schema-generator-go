@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"go/format"
 	"go/types"
 	"log"
 	"maps"
@@ -403,8 +404,11 @@ func main() {
 		if err != nil {
 			log.Fatalf("error opening shim file for writing: %v", err)
 		}
-		file.WriteString(shimHeaderBuilder.String())
-		file.WriteString(shimBuilder.String())
+		source, err := format.Source([]byte(shimHeaderBuilder.String() + shimBuilder.String()))
+		if err != nil {
+			log.Fatalf("error formatting %v: %v", shimGoPath, err)
+		}
+		file.Write(source)
 
 		shimHeaderBuilder.Reset()
 		shimBuilder.Reset()

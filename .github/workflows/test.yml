@@ -17,6 +17,14 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
+      - name: gofmt
+        run: |
+          unformatted="$(gofmt -l $(git ls-files '*.go'))"
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-clean:"
+            echo "$unformatted"
+            exit 1
+          fi
       - run: go vet ./...
       - run: go run honnef.co/go/tools/cmd/staticcheck@latest ./...
       - run: go build ./...
