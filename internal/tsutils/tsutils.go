@@ -39,16 +39,9 @@ func HasJSDocTag(node *ast.Node, tagName string) bool {
 		return false
 	}
 	for _, declaration := range symbol.Declarations {
-		for _, tag := range JSDocTags(declaration) {
-			if name := tag.TagName(); name != nil && name.Text() == tagName {
-				return true
-			}
-		}
-		// The old TypeScript parser turned `@@tag` into an empty tag followed
-		// by a real `tag`; typescript-go drops the construct entirely and
-		// leaves it in the comment text (vega-lite relies on `@@hidden`).
-		for _, doc := range JSDocsOf(declaration) {
-			if jsdocCommentMentionsDoubleAtTag(doc, tagName) {
+		sourceFile := ast.GetSourceFileOfNode(declaration)
+		for _, doc := range declaration.JSDoc(sourceFile) {
+			if jsdocHasTag(sourceFile, doc, tagName) {
 				return true
 			}
 		}
@@ -56,21 +49,38 @@ func HasJSDocTag(node *ast.Node, tagName string) bool {
 	return false
 }
 
-func jsdocCommentMentionsDoubleAtTag(doc *ast.Node, tagName string) bool {
-	text := scanner.GetTextOfJSDocComment(doc.AsJSDoc().Comment)
-	needle := "@@" + tagName
-	for idx := strings.Index(text, needle); idx >= 0; {
-		end := idx + len(needle)
-		if end == len(text) || !isJSDocTagNameChar(text[end]) {
-			return true
+func jsdocHasTag(sourceFile *ast.SourceFile, doc *ast.Node, tagName string) bool {
+	jsdoc := doc.AsJSDoc()
+	if jsdoc.Tags != nil {
+		for _, tag := range jsdoc.Tags.Nodes {
+			if name := tag.TagName(); name != nil && name.Text() == tagName {
+				return true
+			}
 		}
-		next := strings.Index(text[end:], needle)
-		if next < 0 {
+	}
+	// The old TypeScript parser turned `@@tag` into an empty tag followed
+	// by a real `tag`; typescript-go drops the construct entirely and
+	// leaves it in the comment text (vega-lite relies on `@@hidden`).
+	// Rendering the comment is costly, so check the raw source first.
+	rawText := scanner.GetSourceTextOfNodeFromSourceFile(sourceFile, doc, true)
+	return strings.Contains(rawText, "@@") &&
+		mentionsDoubleAtTag(scanner.GetTextOfJSDocComment(jsdoc.Comment), tagName)
+}
+
+// mentionsDoubleAtTag reports whether text contains `@@tagName` as a whole
+// tag name, i.e. not followed by another tag name character.
+func mentionsDoubleAtTag(text, tagName string) bool {
+	needle := "@@" + tagName
+	for {
+		idx := strings.Index(text, needle)
+		if idx < 0 {
 			return false
 		}
-		idx = end + next
+		text = text[idx+len(needle):]
+		if text == "" || !isJSDocTagNameChar(text[0]) {
+			return true
+		}
 	}
-	return false
 }
 
 func isJSDocTagNameChar(c byte) bool {
