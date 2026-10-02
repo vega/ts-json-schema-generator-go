@@ -197,10 +197,7 @@ func (p *MappedTypeNodeParser) getAdditionalProperties(node *ast.Node, keyListTy
 func (p *MappedTypeNodeParser) createSubContext(node *ast.Node, key types.Type, parentContext *Context) *Context {
 	subContext := NewContext(node)
 
-	for _, parentParameter := range parentContext.Parameters() {
-		subContext.PushParameter(parentParameter)
-		subContext.PushArgument(parentContext.GetArgument(parentParameter))
-	}
+	inheritParameters(subContext, parentContext, "")
 
 	subContext.PushParameter(node.AsMappedTypeNode().TypeParameter.Name().Text())
 	subContext.PushArgument(key)

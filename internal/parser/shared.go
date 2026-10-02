@@ -64,6 +64,32 @@ func newCallArgumentContext(child NodeParser, node *ast.Node, parentContext *Con
 	return newArgumentContext(child, node, node.Arguments(), parentContext)
 }
 
+// inheritParameters copies every type parameter of parentContext except skip,
+// with its resolved argument, into subContext.
+func inheritParameters(subContext, parentContext *Context, skip string) {
+	for _, parentParameter := range parentContext.Parameters() {
+		if parentParameter == skip {
+			continue
+		}
+		subContext.PushParameter(parentParameter)
+		subContext.PushArgument(parentContext.GetArgument(parentParameter))
+	}
+}
+
+// pushTypeParameters pushes the names (and defaults) of a declaration's type
+// parameters onto ctx, zipping them positionally with the arguments the
+// caller already pushed. Defaults are parsed in ctx itself.
+func pushTypeParameters(typeChecker *checker.Checker, child NodeParser, node *ast.Node, ctx *Context) {
+	for _, typeParam := range node.TypeParameters() {
+		nameSymbol := tsutils.GetSymbolAtLocation(typeChecker, typeParam.Name())
+		ctx.PushParameter(nameSymbol.Name)
+
+		if defaultType := typeParam.AsTypeParameterDeclaration().DefaultType; defaultType != nil {
+			ctx.SetDefault(nameSymbol.Name, child.CreateType(defaultType, ctx, nil))
+		}
+	}
+}
+
 // expressionDeclaration resolves the declaration standing behind the type of a
 // call or new expression. For generic signatures such as <T>(type: T) => T
 // there is no reference to the original type, so the checker's synthesized
