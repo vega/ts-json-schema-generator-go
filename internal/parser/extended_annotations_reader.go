@@ -110,7 +110,7 @@ func (r *ExtendedAnnotationsReader) exampleAnnotation(node *ast.Node) types.Anno
 		if tag.name != "example" {
 			continue
 		}
-		if parsed, err := ParseJSON5(tag.text); err == nil {
+		if parsed, err := parseJSON5(tag.text); err == nil {
 			examples = append(examples, parsed)
 		}
 		// Ignore examples which don't parse to valid JSON.

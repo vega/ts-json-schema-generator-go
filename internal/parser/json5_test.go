@@ -52,12 +52,12 @@ func TestParseJSON5Values(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseJSON5(tt.input)
+			got, err := parseJSON5(tt.input)
 			if err != nil {
-				t.Fatalf("ParseJSON5(%q) returned error: %v", tt.input, err)
+				t.Fatalf("parseJSON5(%q) returned error: %v", tt.input, err)
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParseJSON5(%q) = %#v, want %#v", tt.input, got, tt.want)
+				t.Errorf("parseJSON5(%q) = %#v, want %#v", tt.input, got, tt.want)
 			}
 		})
 	}
@@ -65,13 +65,13 @@ func TestParseJSON5Values(t *testing.T) {
 
 func TestParseJSON5NaN(t *testing.T) {
 	for _, input := range []string{"NaN", "-NaN", "+NaN"} {
-		got, err := ParseJSON5(input)
+		got, err := parseJSON5(input)
 		if err != nil {
-			t.Fatalf("ParseJSON5(%q) returned error: %v", input, err)
+			t.Fatalf("parseJSON5(%q) returned error: %v", input, err)
 		}
 		f, ok := got.(float64)
 		if !ok || !math.IsNaN(f) {
-			t.Errorf("ParseJSON5(%q) = %#v, want NaN", input, got)
+			t.Errorf("parseJSON5(%q) = %#v, want NaN", input, got)
 		}
 	}
 }
@@ -89,11 +89,23 @@ func TestParseJSON5Errors(t *testing.T) {
 		"tru",
 		"0x",
 		"/* unterminated",
+		"1 /* unterminated",
 		"{: 1}",
 	}
 	for _, input := range inputs {
-		if got, err := ParseJSON5(input); err == nil {
-			t.Errorf("ParseJSON5(%q) = %#v, want error", input, got)
+		if got, err := parseJSON5(input); err == nil {
+			t.Errorf("parseJSON5(%q) = %#v, want error", input, got)
 		}
+	}
+}
+
+// TestUnparsableDefaultFallsBackToText mirrors BasicAnnotationsReader.ts:
+// json5.parse throws on an unterminated trailing comment, so the tag keeps
+// its raw text.
+func TestUnparsableDefaultFallsBackToText(t *testing.T) {
+	reader := NewBasicAnnotationsReader(nil)
+	got, ok := reader.parseJSDocTag(jsDocTagInfo{name: "default", text: "1 /* x"})
+	if !ok || got != "1 /* x" {
+		t.Errorf("parseJSDocTag(@default 1 /* x) = %#v, %v; want \"1 /* x\", true", got, ok)
 	}
 }
