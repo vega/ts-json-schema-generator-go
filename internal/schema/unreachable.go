@@ -100,7 +100,7 @@ func EncodeRef(name string) string {
 		case b == '-' || b == '_' || b == '.' || b == '!' || b == '~' || b == '*' || b == '\'' || b == '(' || b == ')':
 			sb.WriteByte(b)
 		default:
-			sb.WriteString(fmt.Sprintf("%%%02X", b))
+			fmt.Fprintf(&sb, "%%%02X", b)
 		}
 	}
 	return sb.String()

@@ -163,13 +163,8 @@ func clearField(def *schema.Definition, key string) {
 }
 
 func toInt(value any) (int, bool) {
-	switch n := value.(type) {
-	case float64:
-		return int(n), true
-	case int:
-		return n, true
-	}
-	return 0, false
+	n, ok := value.(float64)
+	return int(n), ok
 }
 
 func toStringSlice(value any) ([]string, bool) {

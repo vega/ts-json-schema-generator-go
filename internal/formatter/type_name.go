@@ -12,7 +12,7 @@ func typeName(value any) string {
 		return "null"
 	case string:
 		return "string"
-	case float64, int:
+	case float64:
 		return "number"
 	case bool:
 		return "boolean"

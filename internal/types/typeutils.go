@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 // NotNever reports whether t is not a NeverType (src/Utils/notNever.ts).
@@ -102,14 +103,9 @@ func JSValueToString(v any) string {
 	case string:
 		return x
 	case bool:
-		if x {
-			return "true"
-		}
-		return "false"
+		return strconv.FormatBool(x)
 	case float64:
 		return NumberToString(x)
-	case int:
-		return NumberToString(float64(x))
 	default:
 		return fmt.Sprintf("%v", x)
 	}
