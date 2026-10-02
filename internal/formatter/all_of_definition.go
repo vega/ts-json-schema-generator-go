@@ -16,12 +16,6 @@ func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.De
 
 		definition.Properties = deepMergeProperties(other.Properties, definition.Properties)
 
-		// additionalPropsDefinition in the TypeScript source: anything that is
-		// neither undefined nor true (i.e. false or a definition).
-		isPropsDefinition := func(props any) bool {
-			return props != nil && props != true
-		}
-
 		if isPropsDefinition(definition.AdditionalProperties) && isPropsDefinition(other.AdditionalProperties) {
 			// Additional properties is false only if all children also set
 			// additional properties to false. Collect additional properties
@@ -81,7 +75,7 @@ func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.De
 			definition.Required = required
 		}
 
-		if isTruthyOrUndefined(other.AdditionalProperties) && definition.AdditionalProperties == false {
+		if other.AdditionalProperties != false && definition.AdditionalProperties == false {
 			definition.AdditionalProperties = nil
 		}
 
@@ -207,15 +201,8 @@ func castTypeArray(t any) []string {
 	return nil
 }
 
-// isTruthyOrUndefined mirrors `props || props === undefined` for
-// additionalProperties values (undefined, bool, or definition).
-func isTruthyOrUndefined(props any) bool {
-	if props == nil {
-		return true
-	}
-	if b, ok := props.(bool); ok {
-		return b
-	}
-	// A definition object is truthy.
-	return true
+// isPropsDefinition mirrors additionalPropsDefinition in the TypeScript
+// source: anything that is neither undefined nor true (false or a definition).
+func isPropsDefinition(props any) bool {
+	return props != nil && props != true
 }

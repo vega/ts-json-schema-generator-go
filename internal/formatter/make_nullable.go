@@ -14,22 +14,6 @@ func makeNullable(def *schema.Definition) *schema.Definition {
 		union = def.AnyOf
 	}
 
-	typeIsString := func(t any) (string, bool) {
-		s, ok := t.(string)
-		return s, ok
-	}
-
-	unionHasNull := func(list []*schema.Definition) bool {
-		for _, d := range list {
-			if s, ok := typeIsString(d.Type); ok && s == "null" {
-				return true
-			}
-		}
-		return false
-	}
-
-	typeStr, typeIsStr := typeIsString(def.Type)
-
 	switch {
 	case union != nil && !unionHasNull(union):
 		if def.OneOf != nil {
@@ -38,25 +22,19 @@ func makeNullable(def *schema.Definition) *schema.Definition {
 			def.AnyOf = append(def.AnyOf, &schema.Definition{Type: "null"})
 		}
 
-	case def.Type != nil && !(typeIsStr && typeStr == "object"):
+	case def.Type != nil && def.Type != "object":
 		switch t := def.Type.(type) {
 		case []string:
 			if !slices.Contains(t, "null") {
 				def.Type = append(append([]string(nil), t...), "null")
 			}
 		case []any:
-			found := false
-			for _, e := range t {
-				if s, ok := e.(string); ok && s == "null" {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if !slices.Contains(t, "null") {
 				def.Type = append(append([]any(nil), t...), "null")
 			}
 		default:
-			if !(typeIsStr && typeStr == "null") {
+			if def.Type != "null" {
+				typeStr, _ := def.Type.(string)
 				def.Type = []string{typeStr, "null"}
 			}
 		}
@@ -67,12 +45,8 @@ func makeNullable(def *schema.Definition) *schema.Definition {
 		}
 
 	default:
-		if def.AnyOf != nil {
-			for _, d := range def.AnyOf {
-				if s, ok := typeIsString(d.Type); ok && s == "null" {
-					return def
-				}
-			}
+		if unionHasNull(def.AnyOf) {
+			return def
 		}
 
 		// Move every key except description, title, and default into a
@@ -99,4 +73,8 @@ func makeNullable(def *schema.Definition) *schema.Definition {
 	}
 
 	return def
+}
+
+func unionHasNull(list []*schema.Definition) bool {
+	return slices.ContainsFunc(list, func(d *schema.Definition) bool { return d.Type == "null" })
 }
