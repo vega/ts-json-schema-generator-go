@@ -95,7 +95,7 @@ func applyAnnotation(def *schema.Definition, key string, value any) {
 			def.SetExtra(key, value)
 		}
 	case "const":
-		def.Const = schema.Ptr(value)
+		def.Const = new(value)
 	case "items":
 		def.Items = value
 	case "additionalItems":
@@ -126,7 +126,7 @@ func applyAnnotation(def *schema.Definition, key string, value any) {
 // value in Extra and returns nil when it is not a number.
 func intOrRaw(def *schema.Definition, key string, value any) *int {
 	if n, ok := toInt(value); ok {
-		return schema.IntPtr(n)
+		return new(n)
 	}
 	def.SetExtra(key, value)
 	return nil

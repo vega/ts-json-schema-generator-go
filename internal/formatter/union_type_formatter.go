@@ -86,7 +86,7 @@ func (f *UnionTypeFormatter) getJSONSchemaDiscriminatorDefinition(unionType *typ
 
 	var duplicates []any
 	for i, item := range kindValues {
-		for j := 0; j < i; j++ {
+		for j := range i {
 			if kindValues[j] == item {
 				duplicates = append(duplicates, item)
 				break

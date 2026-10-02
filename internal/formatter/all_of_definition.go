@@ -111,7 +111,7 @@ func deepMergeProperties(a, b *schema.Properties) *schema.Properties {
 		}
 		merged := bv.Clone()
 		if len(enums) == 1 {
-			merged.Const = schema.Ptr(enums[0])
+			merged.Const = new(enums[0])
 			merged.Enum = nil
 		} else {
 			merged.Enum = enums

@@ -4,6 +4,8 @@ package parser
 // over the intermediate type model. Pure type-model code, no AST imports.
 
 import (
+	"maps"
+
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
@@ -335,9 +337,7 @@ func isAssignableTo(target, source types.Type, inferMap *InferMap, insideTypes m
 			}
 
 			inside := make(map[types.Type]bool, len(insideTypes)+2)
-			for k, v := range insideTypes {
-				inside[k] = v
-			}
+			maps.Copy(inside, insideTypes)
 			inside[source] = true
 			inside[target] = true
 			for _, sourceMember := range sourceMembers {

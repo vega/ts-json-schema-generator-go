@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"slices"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
@@ -25,10 +27,8 @@ func (p *IntersectionNodeParser) CreateType(node *ast.Node, ctx *Context, _ *typ
 	memberTypes := createTypes(p.childNodeParser, node.AsIntersectionTypeNode().Types.Nodes, ctx)
 
 	// If any type is never, the intersection type resolves to never.
-	for _, typ := range memberTypes {
-		if types.IsNeverLike(typ) {
-			return &types.NeverType{}
-		}
+	if slices.ContainsFunc(memberTypes, types.IsNeverLike) {
+		return &types.NeverType{}
 	}
 
 	// Handle autocomplete hacks like `string & {}`.

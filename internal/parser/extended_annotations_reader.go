@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"maps"
 	"slices"
 	"strings"
 	"unicode"
@@ -51,9 +52,7 @@ func (r *ExtendedAnnotationsReader) GetAnnotations(node *ast.Node) types.Annotat
 }
 
 func mergeAnnotations(dst, src types.Annotations) {
-	for k, v := range src {
-		dst[k] = v
-	}
+	maps.Copy(dst, src)
 }
 
 // IsNullable reports whether the node's symbol carries a @nullable JSDoc tag.

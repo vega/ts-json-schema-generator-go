@@ -28,7 +28,7 @@ func (f *EnumTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
 	// so the side effect is that an enum type that contains just a single
 	// value is represented as "const" too.
 	if len(values) == 1 {
-		return &schema.Definition{Type: names[0], Const: schema.Ptr(values[0])}
+		return &schema.Definition{Type: names[0], Const: new(values[0])}
 	}
 	return &schema.Definition{Type: toEnumType(names), Enum: values}
 }

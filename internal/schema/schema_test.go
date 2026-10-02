@@ -133,7 +133,7 @@ func TestDefinitionMarshalNonFiniteNumbers(t *testing.T) {
 	// reaches the schema as +Inf.
 	def := &Definition{
 		Type:  "number",
-		Const: Ptr(math.Inf(1)),
+		Const: new(any(math.Inf(1))),
 		Enum:  []any{math.Inf(-1), math.NaN(), 1.5},
 	}
 	def.SetExtra("examples", []any{math.Inf(1), map[string]any{"n": math.NaN()}})
@@ -151,7 +151,7 @@ func TestDefinitionMarshalNonFiniteNumbers(t *testing.T) {
 
 func TestDefinitionMarshalNegativeZero(t *testing.T) {
 	// JSON.stringify(-0) is "0".
-	def := &Definition{Const: Ptr(math.Copysign(0, -1))}
+	def := &Definition{Const: new(any(math.Copysign(0, -1)))}
 	got, err := MarshalStable(def, false, true)
 	if err != nil {
 		t.Fatal(err)

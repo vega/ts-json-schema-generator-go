@@ -7,7 +7,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"iter"
+	"maps"
 	"math"
+	"slices"
 	"sort"
 )
 
@@ -56,12 +58,6 @@ type Definition struct {
 	Extra map[string]any
 }
 
-// Ptr wraps a value for assignment to *any fields such as Const.
-func Ptr(v any) *any { return &v }
-
-// IntPtr wraps an int for assignment to *int fields.
-func IntPtr(v int) *int { return &v }
-
 // SetExtra sets an annotation keyword on the definition.
 func (d *Definition) SetExtra(key string, value any) {
 	if d.Extra == nil {
@@ -76,10 +72,8 @@ func (d *Definition) HasType(name string) bool {
 	case string:
 		return t == name
 	case []string:
-		for _, s := range t {
-			if s == name {
-				return true
-			}
+		if slices.Contains(t, name) {
+			return true
 		}
 	case []any:
 		for _, s := range t {
@@ -148,9 +142,7 @@ func (p *Properties) Clone() *Properties {
 		keys:   append([]string(nil), p.keys...),
 		values: make(map[string]*Definition, len(p.values)),
 	}
-	for k, v := range p.values {
-		c.values[k] = v
-	}
+	maps.Copy(c.values, p.values)
 	return c
 }
 
@@ -358,9 +350,7 @@ func (d *Definition) Clone() *Definition {
 	}
 	if d.Extra != nil {
 		c.Extra = make(map[string]any, len(d.Extra))
-		for k, v := range d.Extra {
-			c.Extra[k] = v
-		}
+		maps.Copy(c.Extra, d.Extra)
 	}
 	c.Required = append([]string(nil), d.Required...)
 	c.Enum = append([]any(nil), d.Enum...)

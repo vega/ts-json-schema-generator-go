@@ -18,7 +18,7 @@ func (f *LiteralTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
 	value := t.(*types.LiteralType).Value
 	return &schema.Definition{
 		Type:  typeName(value),
-		Const: schema.Ptr(value),
+		Const: new(value),
 	}
 }
 
