@@ -53,10 +53,7 @@ func (p *StringTemplateLiteralNodeParser) CreateType(node *ast.Node, ctx *Contex
 		expandedTypes[i] = &types.LiteralType{Value: literal}
 	}
 
-	if len(expandedTypes) == 1 {
-		return expandedTypes[0]
-	}
-	return types.NewUnionType(expandedTypes)
+	return singleOrUnion(expandedTypes)
 }
 
 // tryExtractLiterals collects the literal expansions of a type, reporting

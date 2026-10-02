@@ -2,19 +2,17 @@ package parser
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/microsoft/typescript-go/shim/checker"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
 // UnionNodeParser parses union type nodes (src/NodeParser/UnionNodeParser.ts).
 type UnionNodeParser struct {
-	typeChecker     *checker.Checker
 	childNodeParser NodeParser
 }
 
-func NewUnionNodeParser(typeChecker *checker.Checker, childNodeParser NodeParser) *UnionNodeParser {
-	return &UnionNodeParser{typeChecker: typeChecker, childNodeParser: childNodeParser}
+func NewUnionNodeParser(childNodeParser NodeParser) *UnionNodeParser {
+	return &UnionNodeParser{childNodeParser: childNodeParser}
 }
 
 func (p *UnionNodeParser) SupportsNode(node *ast.Node) bool {

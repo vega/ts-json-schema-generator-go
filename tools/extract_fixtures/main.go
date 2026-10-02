@@ -14,37 +14,9 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/vega/ts-json-schema-generator-go/internal/fixtures"
 )
-
-// Entry is one fixture invocation in the manifest.
-type Entry struct {
-	Name       string         `json:"name"`
-	Types      []string       `json:"types,omitempty"`
-	Config     map[string]any `json:"config,omitempty"`
-	MainTsOnly bool           `json:"mainTsOnly,omitempty"`
-	Skip       string         `json:"skip,omitempty"`
-}
-
-// configKeys maps supported config keys to their expected value kind:
-// "string", "bool", or "strings" (array of strings).
-var configKeys = map[string]string{
-	"jsDoc":                "string",
-	"expose":               "string",
-	"schemaId":             "string",
-	"discriminatorType":    "string",
-	"functions":            "string",
-	"tsconfig":             "string",
-	"topRef":               "bool",
-	"extraTags":            "strings",
-	"additionalProperties": "bool",
-	"sortProps":            "bool",
-	"encodeRefs":           "bool",
-	"markdownDescription":  "bool",
-	"fullDescription":      "bool",
-	"minify":               "bool",
-	"strictTuples":         "bool",
-	"skipTypeCheck":        "bool",
-}
 
 var allowedImports = regexp.MustCompile(
 	`^import\s+(type\s+)?({[^}]*}|[\w$]+)\s+from\s+"(\.\./\.\./utils(\.js)?|node:test)";?$`)
@@ -63,7 +35,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var manifest []Entry
+	var manifest []fixtures.Entry
 	parsed, skipped := 0, 0
 	for _, dirEntry := range dirEntries {
 		if !dirEntry.IsDir() {
@@ -118,9 +90,9 @@ func repoRoot() (string, error) {
 
 // extractFixture parses one fixture directory into manifest entries. A
 // fixture that cannot be parsed confidently yields a single skip entry.
-func extractFixture(dir, name string) []Entry {
-	skip := func(reason string) []Entry {
-		return []Entry{{Name: name, Skip: reason}}
+func extractFixture(dir, name string) []fixtures.Entry {
+	skip := func(reason string) []fixtures.Entry {
+		return []fixtures.Entry{{Name: name, Skip: reason}}
 	}
 
 	source, err := os.ReadFile(filepath.Join(dir, "index.test.ts"))
@@ -140,7 +112,7 @@ func extractFixture(dir, name string) []Entry {
 
 	consts := parseConsts(text)
 
-	var entries []Entry
+	var entries []fixtures.Entry
 	rest := text
 	for {
 		idx := strings.Index(rest, "assertValidSchema(")
@@ -168,7 +140,7 @@ func extractFixture(dir, name string) []Entry {
 	return entries
 }
 
-func containsEntry(entries []Entry, entry Entry) bool {
+func containsEntry(entries []fixtures.Entry, entry fixtures.Entry) bool {
 	for _, e := range entries {
 		if reflect.DeepEqual(e, entry) {
 			return true
@@ -179,24 +151,24 @@ func containsEntry(entries []Entry, entry Entry) bool {
 
 // parseCall turns the argument list of one assertValidSchema call into an
 // Entry: (relativePath, type?, config?, options?).
-func parseCall(args []string, name string, consts map[string]string) (Entry, error) {
+func parseCall(args []string, name string, consts map[string]string) (fixtures.Entry, error) {
 	if len(args) == 0 {
-		return Entry{}, fmt.Errorf("assertValidSchema call without arguments")
+		return fixtures.Entry{}, fmt.Errorf("assertValidSchema call without arguments")
 	}
 
 	fixtureName, err := resolveString(args[0], consts)
 	if err != nil {
-		return Entry{}, fmt.Errorf("cannot resolve fixture name %q: %w", args[0], err)
+		return fixtures.Entry{}, fmt.Errorf("cannot resolve fixture name %q: %w", args[0], err)
 	}
 	if fixtureName != name {
-		return Entry{}, fmt.Errorf("fixture name %q does not match directory %q", fixtureName, name)
+		return fixtures.Entry{}, fmt.Errorf("fixture name %q does not match directory %q", fixtureName, name)
 	}
-	entry := Entry{Name: name}
+	entry := fixtures.Entry{Name: name}
 
 	if len(args) > 1 && args[1] != "undefined" {
 		value, err := parseJSValue(args[1])
 		if err != nil {
-			return Entry{}, fmt.Errorf("cannot parse type argument %q: %w", args[1], err)
+			return fixtures.Entry{}, fmt.Errorf("cannot parse type argument %q: %w", args[1], err)
 		}
 		switch v := value.(type) {
 		case string:
@@ -205,49 +177,26 @@ func parseCall(args []string, name string, consts map[string]string) (Entry, err
 			for _, item := range v {
 				s, ok := item.(string)
 				if !ok {
-					return Entry{}, fmt.Errorf("type array contains non-string %v", item)
+					return fixtures.Entry{}, fmt.Errorf("type array contains non-string %v", item)
 				}
 				entry.Types = append(entry.Types, s)
 			}
 		default:
-			return Entry{}, fmt.Errorf("unsupported type argument %q", args[1])
+			return fixtures.Entry{}, fmt.Errorf("unsupported type argument %q", args[1])
 		}
 	}
 
 	if len(args) > 2 && args[2] != "undefined" {
 		value, err := parseJSValue(args[2])
 		if err != nil {
-			return Entry{}, fmt.Errorf("cannot parse config argument: %w", err)
+			return fixtures.Entry{}, fmt.Errorf("cannot parse config argument: %w", err)
 		}
 		obj, ok := value.(map[string]any)
 		if !ok {
-			return Entry{}, fmt.Errorf("config argument is not an object literal")
+			return fixtures.Entry{}, fmt.Errorf("config argument is not an object literal")
 		}
-		for key, val := range obj {
-			kind, known := configKeys[key]
-			if !known {
-				return Entry{}, fmt.Errorf("unsupported config key %q", key)
-			}
-			switch kind {
-			case "string":
-				if _, ok := val.(string); !ok {
-					return Entry{}, fmt.Errorf("config key %q is not a string", key)
-				}
-			case "bool":
-				if _, ok := val.(bool); !ok {
-					return Entry{}, fmt.Errorf("config key %q is not a boolean", key)
-				}
-			case "strings":
-				list, ok := val.([]any)
-				if !ok {
-					return Entry{}, fmt.Errorf("config key %q is not an array", key)
-				}
-				for _, item := range list {
-					if _, ok := item.(string); !ok {
-						return Entry{}, fmt.Errorf("config key %q contains non-string %v", key, item)
-					}
-				}
-			}
+		if err := fixtures.ValidateConfig(obj); err != nil {
+			return fixtures.Entry{}, err
 		}
 		entry.Config = obj
 	}
@@ -255,11 +204,11 @@ func parseCall(args []string, name string, consts map[string]string) (Entry, err
 	if len(args) > 3 && args[3] != "undefined" {
 		value, err := parseJSValue(args[3])
 		if err != nil {
-			return Entry{}, fmt.Errorf("cannot parse options argument: %w", err)
+			return fixtures.Entry{}, fmt.Errorf("cannot parse options argument: %w", err)
 		}
 		obj, ok := value.(map[string]any)
 		if !ok {
-			return Entry{}, fmt.Errorf("options argument is not an object literal")
+			return fixtures.Entry{}, fmt.Errorf("options argument is not an object literal")
 		}
 		// Sample data and Ajv options are only used for validation in the
 		// TypeScript tests; the Go harness ignores them.
@@ -268,19 +217,19 @@ func parseCall(args []string, name string, consts map[string]string) (Entry, err
 			case "mainTsOnly":
 				b, ok := val.(bool)
 				if !ok {
-					return Entry{}, fmt.Errorf("options key mainTsOnly is not a boolean")
+					return fixtures.Entry{}, fmt.Errorf("options key mainTsOnly is not a boolean")
 				}
 				entry.MainTsOnly = b
 			case "validSamples", "invalidSamples", "ajvOptions":
 				// ignored
 			default:
-				return Entry{}, fmt.Errorf("unsupported options key %q", key)
+				return fixtures.Entry{}, fmt.Errorf("unsupported options key %q", key)
 			}
 		}
 	}
 
 	if len(args) > 4 {
-		return Entry{}, fmt.Errorf("assertValidSchema call has %d arguments", len(args))
+		return fixtures.Entry{}, fmt.Errorf("assertValidSchema call has %d arguments", len(args))
 	}
 
 	return entry, nil

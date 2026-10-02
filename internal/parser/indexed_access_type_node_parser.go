@@ -143,8 +143,5 @@ func (p *IndexedAccessTypeNodeParser) CreateType(node *ast.Node, ctx *Context, _
 		propertyTypes = append(propertyTypes, propertyType)
 	}
 
-	if len(propertyTypes) == 1 {
-		return propertyTypes[0]
-	}
-	return types.NewUnionType(propertyTypes)
+	return singleOrUnion(propertyTypes)
 }

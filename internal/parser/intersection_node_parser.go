@@ -2,7 +2,6 @@ package parser
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/microsoft/typescript-go/shim/checker"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
@@ -11,12 +10,11 @@ import (
 // (src/NodeParser/IntersectionNodeParser.ts). The translate() helper lives in
 // types.Translate.
 type IntersectionNodeParser struct {
-	typeChecker     *checker.Checker
 	childNodeParser NodeParser
 }
 
-func NewIntersectionNodeParser(typeChecker *checker.Checker, childNodeParser NodeParser) *IntersectionNodeParser {
-	return &IntersectionNodeParser{typeChecker: typeChecker, childNodeParser: childNodeParser}
+func NewIntersectionNodeParser(childNodeParser NodeParser) *IntersectionNodeParser {
+	return &IntersectionNodeParser{childNodeParser: childNodeParser}
 }
 
 func (p *IntersectionNodeParser) SupportsNode(node *ast.Node) bool {
@@ -24,11 +22,7 @@ func (p *IntersectionNodeParser) SupportsNode(node *ast.Node) bool {
 }
 
 func (p *IntersectionNodeParser) CreateType(node *ast.Node, ctx *Context, _ *types.ReferenceType) types.Type {
-	subnodes := node.AsIntersectionTypeNode().Types.Nodes
-	memberTypes := make([]types.Type, len(subnodes))
-	for i, subnode := range subnodes {
-		memberTypes[i] = p.childNodeParser.CreateType(subnode, ctx, nil)
-	}
+	memberTypes := createTypes(p.childNodeParser, node.AsIntersectionTypeNode().Types.Nodes, ctx)
 
 	// If any type is never, the intersection type resolves to never.
 	for _, typ := range memberTypes {

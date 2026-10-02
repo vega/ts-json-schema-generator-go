@@ -2,45 +2,24 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/vega/ts-json-schema-generator-go/internal/testutil"
 )
 
-// TestMain switches the working directory to the repo root, like internal/e2e:
-// node-key hashes embed cwd-relative filenames, so the golden schemas only
-// reproduce when generating from the root.
 func TestMain(m *testing.M) {
-	if _, file, _, ok := runtime.Caller(0); ok {
-		if err := os.Chdir(rootOf(file)); err != nil {
-			fmt.Fprintln(os.Stderr, "cannot chdir to repo root:", err)
-			os.Exit(1)
-		}
-	}
+	testutil.ChdirRepoRoot()
 	os.Exit(m.Run())
-}
-
-func rootOf(file string) string {
-	return filepath.Dir(filepath.Dir(filepath.Dir(file)))
-}
-
-func repoRoot(t *testing.T) string {
-	t.Helper()
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("cannot determine caller file")
-	}
-	return rootOf(file)
 }
 
 // fixturePath returns the glob the e2e tests use for a test/valid-data fixture.
 func fixturePath(t *testing.T, name string) string {
 	t.Helper()
-	return filepath.Join(repoRoot(t), "test", "valid-data", name, "*.ts")
+	return filepath.Join(testutil.RepoRoot(t), "test", "valid-data", name, "*.ts")
 }
 
 // TestOutdirMatchesSingleTypeRuns is the property that makes --outdir worth
@@ -149,7 +128,7 @@ func TestOutdirMatchesGoldenSchema(t *testing.T) {
 	}
 
 	got := readJSON(t, filepath.Join(outdir, "MyObject.schema.json"))
-	want := readJSON(t, filepath.Join(repoRoot(t), "test", "valid-data", "interface-multi", "schema.json"))
+	want := readJSON(t, filepath.Join(testutil.RepoRoot(t), "test", "valid-data", "interface-multi", "schema.json"))
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("generated schema does not match the golden fixture\n got: %#v\nwant: %#v", got, want)
 	}

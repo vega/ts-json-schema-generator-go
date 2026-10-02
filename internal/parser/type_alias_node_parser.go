@@ -1,13 +1,10 @@
 package parser
 
 import (
-	"strings"
-
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
 	"github.com/microsoft/typescript-go/shim/scanner"
 
-	"github.com/vega/ts-json-schema-generator-go/internal/tsutils"
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
@@ -27,16 +24,7 @@ func (p *TypeAliasNodeParser) SupportsNode(node *ast.Node) bool {
 }
 
 func (p *TypeAliasNodeParser) CreateType(node *ast.Node, ctx *Context, reference *types.ReferenceType) types.Type {
-	// Push parameter names (and defaults) onto the incoming context, zipping
-	// them positionally with the arguments pushed by the caller.
-	for _, typeParam := range node.TypeParameters() {
-		nameSymbol := tsutils.GetSymbolAtLocation(p.typeChecker, typeParam.Name())
-		ctx.PushParameter(nameSymbol.Name)
-
-		if defaultType := typeParam.AsTypeParameterDeclaration().DefaultType; defaultType != nil {
-			ctx.SetDefault(nameSymbol.Name, p.childNodeParser.CreateType(defaultType, ctx, nil))
-		}
-	}
+	pushTypeParameters(p.typeChecker, p.childNodeParser, node, ctx)
 
 	id := p.getTypeId(node, ctx)
 	name := p.getTypeName(node, ctx)
@@ -64,11 +52,5 @@ func (p *TypeAliasNodeParser) getTypeName(node *ast.Node, ctx *Context) string {
 		return fullName
 	}
 
-	argumentIds := make([]string, len(arguments))
-	for i, argument := range arguments {
-		if argument != nil {
-			argumentIds[i] = argument.Name()
-		}
-	}
-	return fullName + "<" + strings.Join(argumentIds, ",") + ">"
+	return fullName + "<" + joinTypes(arguments, types.Type.Name) + ">"
 }

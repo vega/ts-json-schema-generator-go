@@ -2,7 +2,6 @@ package parser
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/microsoft/typescript-go/shim/checker"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/tsutils"
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
@@ -10,12 +9,10 @@ import (
 
 // HiddenNodeParser turns nodes annotated with the @hidden JSDoc tag into
 // HiddenType (src/NodeParser/HiddenTypeNodeParser.ts).
-type HiddenNodeParser struct {
-	typeChecker *checker.Checker
-}
+type HiddenNodeParser struct{}
 
-func NewHiddenNodeParser(typeChecker *checker.Checker) *HiddenNodeParser {
-	return &HiddenNodeParser{typeChecker: typeChecker}
+func NewHiddenNodeParser() *HiddenNodeParser {
+	return &HiddenNodeParser{}
 }
 
 func (p *HiddenNodeParser) SupportsNode(node *ast.Node) bool {

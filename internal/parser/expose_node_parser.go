@@ -2,7 +2,6 @@ package parser
 
 import (
 	"regexp"
-	"strings"
 
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
@@ -71,11 +70,5 @@ func (p *ExposeNodeParser) getDefinitionName(node *ast.Node, ctx *Context) strin
 	if len(args) == 0 {
 		return fullName
 	}
-	argumentIDs := make([]string, len(args))
-	for i, arg := range args {
-		if arg != nil {
-			argumentIDs[i] = arg.Name()
-		}
-	}
-	return fullName + "<" + strings.Join(argumentIDs, ",") + ">"
+	return fullName + "<" + joinTypes(args, types.Type.Name) + ">"
 }
