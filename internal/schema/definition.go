@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"iter"
 	"math"
 	"sort"
 )
@@ -125,6 +126,33 @@ func (p *Properties) Get(key string) (*Definition, bool) {
 }
 
 func (p *Properties) Keys() []string { return p.keys }
+
+// All iterates over the properties in insertion order. A nil Properties
+// yields nothing.
+func (p *Properties) All() iter.Seq2[string, *Definition] {
+	return func(yield func(string, *Definition) bool) {
+		if p == nil {
+			return
+		}
+		for _, k := range p.keys {
+			if !yield(k, p.values[k]) {
+				return
+			}
+		}
+	}
+}
+
+// Clone returns a copy of the properties that shares the definitions.
+func (p *Properties) Clone() *Properties {
+	c := &Properties{
+		keys:   append([]string(nil), p.keys...),
+		values: make(map[string]*Definition, len(p.values)),
+	}
+	for k, v := range p.values {
+		c.values[k] = v
+	}
+	return c
+}
 
 func (p *Properties) Len() int {
 	if p == nil {
@@ -326,12 +354,7 @@ func (s sortedMapT) MarshalJSON() ([]byte, error) {
 func (d *Definition) Clone() *Definition {
 	c := *d
 	if d.Properties != nil {
-		p := NewProperties()
-		for _, k := range d.Properties.Keys() {
-			v, _ := d.Properties.Get(k)
-			p.Set(k, v)
-		}
-		c.Properties = p
+		c.Properties = d.Properties.Clone()
 	}
 	if d.Extra != nil {
 		c.Extra = make(map[string]any, len(d.Extra))

@@ -89,22 +89,15 @@ func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.De
 func deepMergeProperties(a, b *schema.Properties) *schema.Properties {
 	out := schema.NewProperties()
 	if a != nil {
-		for _, k := range a.Keys() {
-			v, _ := a.Get(k)
-			out.Set(k, v)
-		}
+		out = a.Clone()
 	}
-	if b != nil {
-		for _, k := range b.Keys() {
-			v, _ := b.Get(k)
-			out.Set(k, v)
-		}
+	for k, v := range b.All() {
+		out.Set(k, v)
 	}
 	if a == nil || b == nil {
 		return out
 	}
-	for _, k := range a.Keys() {
-		av, _ := a.Get(k)
+	for k, av := range a.All() {
 		bv, ok := b.Get(k)
 		if !ok || av == nil || bv == nil || av.Type == nil || bv.Type == nil {
 			continue

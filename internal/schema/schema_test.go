@@ -27,6 +27,35 @@ func TestDefinitionIsEmpty(t *testing.T) {
 	}
 }
 
+func TestPropertiesCloneAndAll(t *testing.T) {
+	a, b := &Definition{Type: "string"}, &Definition{Type: "number"}
+	props := NewProperties()
+	props.Set("b", a)
+	props.Set("a", b)
+
+	clone := props.Clone()
+	clone.Set("c", a)
+	if props.Len() != 2 || clone.Len() != 3 {
+		t.Fatalf("Clone shares state: original %d keys, clone %d keys", props.Len(), clone.Len())
+	}
+
+	var keys []string
+	for k, v := range clone.All() {
+		if got, _ := clone.Get(k); got != v {
+			t.Errorf("All yielded %q -> %v, Get returns %v", k, v, got)
+		}
+		keys = append(keys, k)
+	}
+	if want := []string{"b", "a", "c"}; !reflect.DeepEqual(keys, want) {
+		t.Errorf("All order = %v, want %v", keys, want)
+	}
+
+	var nilProps *Properties
+	for k := range nilProps.All() {
+		t.Errorf("nil Properties yielded %q", k)
+	}
+}
+
 // nonEmptyValue returns a value of type t that counts as a set key.
 func nonEmptyValue(t reflect.Type) reflect.Value {
 	if t == reflect.TypeFor[*Properties]() {
