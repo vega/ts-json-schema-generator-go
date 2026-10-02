@@ -17,9 +17,7 @@ import (
 func TestVegaLite(t *testing.T) {
 	root := repoRoot(t)
 	entry := filepath.Join(root, "node_modules", "vega-lite", "src", "index.ts")
-	if _, err := os.Stat(entry); err != nil {
-		t.Skip("vega-lite sources not installed (run npm ci)")
-	}
+	requireNpmSources(t, entry)
 
 	cfg := config.Default()
 	cfg.Path = entry
