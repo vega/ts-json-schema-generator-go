@@ -38,11 +38,12 @@ func NewExtendedAnnotationsReader(
 }
 
 func (r *ExtendedAnnotationsReader) GetAnnotations(node *ast.Node) types.Annotations {
+	jsDocTags := symbolJSDocTags(node)
 	annotations := types.Annotations{}
 	mergeAnnotations(annotations, r.descriptionAnnotation(node))
-	mergeAnnotations(annotations, r.typeAnnotation(node))
-	mergeAnnotations(annotations, r.exampleAnnotation(node))
-	mergeAnnotations(annotations, r.BasicAnnotationsReader.GetAnnotations(node))
+	mergeAnnotations(annotations, typeAnnotation(jsDocTags))
+	mergeAnnotations(annotations, exampleAnnotation(jsDocTags))
+	mergeAnnotations(annotations, r.annotationsFromTags(jsDocTags))
 	if len(annotations) == 0 {
 		return nil
 	}
@@ -93,8 +94,8 @@ func (r *ExtendedAnnotationsReader) descriptionAnnotation(node *ast.Node) types.
 	return annotations
 }
 
-func (r *ExtendedAnnotationsReader) typeAnnotation(node *ast.Node) types.Annotations {
-	for _, tag := range symbolJSDocTags(node) {
+func typeAnnotation(jsDocTags []jsDocTagInfo) types.Annotations {
+	for _, tag := range jsDocTags {
 		if tag.name == "asType" {
 			return types.Annotations{"type": tag.text}
 		}
@@ -104,9 +105,9 @@ func (r *ExtendedAnnotationsReader) typeAnnotation(node *ast.Node) types.Annotat
 
 // exampleAnnotation gathers examples from the @example JSDoc tag.
 // See https://tsdoc.org/pages/tags/example/
-func (r *ExtendedAnnotationsReader) exampleAnnotation(node *ast.Node) types.Annotations {
+func exampleAnnotation(jsDocTags []jsDocTagInfo) types.Annotations {
 	var examples []any
-	for _, tag := range symbolJSDocTags(node) {
+	for _, tag := range jsDocTags {
 		if tag.name != "example" {
 			continue
 		}
@@ -185,17 +186,7 @@ func (r *ExtendedAnnotationsReader) symbolDocumentationCommentWithInheritance(sy
 		if name == nil {
 			continue
 		}
-		var clauses *ast.NodeList
-		switch owner.Kind {
-		case ast.KindInterfaceDeclaration:
-			clauses = owner.AsInterfaceDeclaration().HeritageClauses
-		case ast.KindClassDeclaration:
-			clauses = owner.AsClassDeclaration().HeritageClauses
-		}
-		if clauses == nil {
-			continue
-		}
-		for _, heritage := range clauses.Nodes {
+		for _, heritage := range heritageClausesOf(owner) {
 			for _, baseExpr := range heritage.AsHeritageClause().Types.Nodes {
 				baseType := r.typeChecker.GetTypeAtLocation(baseExpr)
 				if baseType == nil {
