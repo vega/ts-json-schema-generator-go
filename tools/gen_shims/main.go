@@ -6,19 +6,23 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"go/format"
 	"go/types"
+	"io/fs"
 	"log"
 	"maps"
 	"os"
-	"path"
+	"path/filepath"
 	"slices"
 	"strings"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	"golang.org/x/tools/go/packages"
+
+	"github.com/vega/ts-json-schema-generator-go/tools/internal/reporoot"
 )
 
 const tsgoInternalPrefix = "github.com/microsoft/typescript-go/internal/"
@@ -51,28 +55,37 @@ func main() {
 		packagesToShimFullNames[i] = tsgoInternalPrefix + pkg
 	}
 
-	packages, err := packages.Load(&packages.Config{
-		// TODO: path relative to repo root
-		Dir:  "./shim/compiler",
+	root, err := reporoot.Find()
+	if err != nil {
+		log.Fatal(err)
+	}
+	shimRoot := filepath.Join(root, "shim")
+
+	loadedPackages, err := packages.Load(&packages.Config{
+		Dir:  filepath.Join(shimRoot, "compiler"),
 		Mode: packages.LoadSyntax,
 	}, packagesToShimFullNames...)
 	if err != nil {
-		log.Fatalf("Error loading package: %v", err)
+		log.Fatalf("error loading packages: %v", err)
+	}
+	if packages.PrintErrors(loadedPackages) > 0 {
+		log.Fatal("error loading packages")
 	}
 
 	var shimHeaderBuilder strings.Builder
 	var shimBuilder strings.Builder
 	var tempBuffer bytes.Buffer
 
-	for _, pkg := range packages {
-		shimDirPath := path.Join("./shim/", strings.TrimPrefix(pkg.PkgPath, tsgoInternalPrefix))
+	for _, pkg := range loadedPackages {
+		shimDirPath := filepath.Join(shimRoot, filepath.FromSlash(strings.TrimPrefix(pkg.PkgPath, tsgoInternalPrefix)))
 		var extraShim ExtraShim
-		extraShimFilePath := path.Join(shimDirPath, "extra-shim.json")
+		extraShimFilePath := filepath.Join(shimDirPath, "extra-shim.json")
 		if data, err := os.ReadFile(extraShimFilePath); err == nil {
 			if err := json.Unmarshal(data, &extraShim); err != nil {
-				fmt.Printf("error parsing %v: %v", extraShimFilePath, err)
-				return
+				log.Fatalf("error parsing %v: %v", extraShimFilePath, err)
 			}
+		} else if !errors.Is(err, fs.ErrNotExist) {
+			log.Fatalf("error reading %v: %v", extraShimFilePath, err)
 		}
 		if extraShim.ExtraMethods == nil {
 			extraShim.ExtraMethods = map[string][]string{}
@@ -260,9 +273,6 @@ func main() {
 					importPackage("unsafe", true)
 
 					matchedExtraFields[name] = true
-					if err != nil {
-						log.Fatalf("error formatting %v struct body: %v", name, err)
-					}
 					mirrorStructName := "extra_" + name
 
 					var emitExtraStruct func(name string, s *types.Struct)
@@ -399,16 +409,14 @@ func main() {
 		}
 		shimHeaderBuilder.WriteString("\n")
 
-		shimGoPath := path.Join(shimDirPath, "shim.go")
-		file, err := os.Create(shimGoPath)
-		if err != nil {
-			log.Fatalf("error opening shim file for writing: %v", err)
-		}
+		shimGoPath := filepath.Join(shimDirPath, "shim.go")
 		source, err := format.Source([]byte(shimHeaderBuilder.String() + shimBuilder.String()))
 		if err != nil {
 			log.Fatalf("error formatting %v: %v", shimGoPath, err)
 		}
-		file.Write(source)
+		if err := os.WriteFile(shimGoPath, source, 0o644); err != nil {
+			log.Fatalf("error writing %v: %v", shimGoPath, err)
+		}
 
 		shimHeaderBuilder.Reset()
 		shimBuilder.Reset()
