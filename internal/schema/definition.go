@@ -124,24 +124,39 @@ func (p *Properties) Len() int {
 func (p *Properties) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte('{')
-	for i, k := range p.keys {
-		if i > 0 {
-			buf.WriteByte(',')
-		}
-		kb, err := json.Marshal(k)
-		if err != nil {
+	for _, k := range p.keys {
+		if err := writeMember(&buf, k, p.values[k]); err != nil {
 			return nil, err
 		}
-		buf.Write(kb)
-		buf.WriteByte(':')
-		vb, err := json.Marshal(p.values[k])
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(vb)
 	}
 	buf.WriteByte('}')
 	return buf.Bytes(), nil
+}
+
+// writeMember appends "key":value to the JSON object open in buf, preceded
+// by a comma unless it is the first member. It encodes without HTML
+// escaping: json.Marshal would escape <, > and & inside nested MarshalJSON
+// output, which the caller's Encoder.SetEscapeHTML(false) cannot undo.
+func writeMember(buf *bytes.Buffer, key string, value any) error {
+	if buf.Len() > len("{") {
+		buf.WriteByte(',')
+	}
+	if err := encodeUnescaped(buf, key); err != nil {
+		return err
+	}
+	buf.WriteByte(':')
+	return encodeUnescaped(buf, value)
+}
+
+func encodeUnescaped(buf *bytes.Buffer, value any) error {
+	var encoded bytes.Buffer
+	encoder := json.NewEncoder(&encoded)
+	encoder.SetEscapeHTML(false)
+	if err := encoder.Encode(value); err != nil {
+		return err
+	}
+	buf.Write(bytes.TrimSuffix(encoded.Bytes(), []byte("\n")))
+	return nil
 }
 
 // MarshalJSON emits fields in a stable, reader-friendly order and merges
@@ -149,26 +164,10 @@ func (p *Properties) MarshalJSON() ([]byte, error) {
 func (d *Definition) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	buf.WriteByte('{')
-	first := true
 	emitted := map[string]bool{}
 	emit := func(key string, v any) error {
-		if !first {
-			buf.WriteByte(',')
-		}
-		first = false
 		emitted[key] = true
-		kb, err := json.Marshal(key)
-		if err != nil {
-			return err
-		}
-		buf.Write(kb)
-		buf.WriteByte(':')
-		vb, err := json.Marshal(jsonSafe(v))
-		if err != nil {
-			return err
-		}
-		buf.Write(vb)
-		return nil
+		return writeMember(&buf, key, jsonSafe(v))
 	}
 
 	type field struct {
@@ -289,21 +288,10 @@ func (s sortedMapT) MarshalJSON() ([]byte, error) {
 	sort.Strings(keys)
 	var buf bytes.Buffer
 	buf.WriteByte('{')
-	for i, k := range keys {
-		if i > 0 {
-			buf.WriteByte(',')
-		}
-		kb, err := json.Marshal(k)
-		if err != nil {
+	for _, k := range keys {
+		if err := writeMember(&buf, k, s.m[k]); err != nil {
 			return nil, err
 		}
-		buf.Write(kb)
-		buf.WriteByte(':')
-		vb, err := json.Marshal(s.m[k])
-		if err != nil {
-			return nil, err
-		}
-		buf.Write(vb)
 	}
 	buf.WriteByte('}')
 	return buf.Bytes(), nil

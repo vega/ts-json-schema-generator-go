@@ -120,7 +120,7 @@ func (r *BasicAnnotationsReader) parseJSDocTag(jsDocTag jsDocTagInfo) (any, bool
 	if isTextTag {
 		return text, true
 	}
-	parsed, err := ParseJSON5(text)
+	parsed, err := parseJSON5(text)
 	if err != nil {
 		parsed = text
 	}
