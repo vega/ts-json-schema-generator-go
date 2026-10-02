@@ -37,7 +37,7 @@ func (f *IntersectionTypeFormatter) GetDefinition(t types.Type) *schema.Definiti
 
 	if len(nonArrayLikeTypes) > 0 {
 		// There are non-array (mergeable) requirements.
-		reducer := GetAllOfDefinitionReducer(f.childTypeFormatter)
+		reducer := getAllOfDefinitionReducer(f.childTypeFormatter)
 		merged := &schema.Definition{Type: "object", AdditionalProperties: false}
 		for _, member := range nonArrayLikeTypes {
 			merged = reducer(merged, member)

@@ -26,7 +26,7 @@ func (f *ObjectTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
 		return definition
 	}
 
-	reducer := GetAllOfDefinitionReducer(f.childTypeFormatter)
+	reducer := getAllOfDefinitionReducer(f.childTypeFormatter)
 	for _, baseType := range baseTypes {
 		definition = reducer(definition, baseType)
 	}

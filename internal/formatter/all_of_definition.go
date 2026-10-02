@@ -7,10 +7,10 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
 
-// GetAllOfDefinitionReducer folds a base type's definition into the given
+// getAllOfDefinitionReducer folds a base type's definition into the given
 // definition, combining objects instead of using allOf because allOf does not
 // work well with additional properties (src/Utils/allOfDefinition.ts).
-func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.Definition, types.Type) *schema.Definition {
+func getAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.Definition, types.Type) *schema.Definition {
 	return func(definition *schema.Definition, baseType types.Type) *schema.Definition {
 		other := childTypeFormatter.GetDefinition(types.DerefType(baseType))
 
