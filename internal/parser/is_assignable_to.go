@@ -75,6 +75,18 @@ func getObjectProperties(t types.Type) []*types.ObjectProperty {
 	return properties
 }
 
+// membersByName indexes members by name. Like Array#find upstream, the first
+// member with a given name wins.
+func membersByName(members []*types.ObjectProperty) map[string]*types.ObjectProperty {
+	byName := make(map[string]*types.ObjectProperty, len(members))
+	for _, member := range members {
+		if _, seen := byName[member.Name()]; !seen {
+			byName[member.Name()] = member
+		}
+	}
+	return byName
+}
+
 func getPrimitiveType(value types.LiteralValue) types.Type {
 	switch value.(type) {
 	case string:
@@ -303,20 +315,13 @@ func isAssignableTo(target, source types.Type, inferMap *InferMap, insideTypes m
 			return !isAssignableTo(nullish, source, inferMap, insideTypes)
 		} else if sourceObject, ok := source.(*types.ObjectType); ok {
 			sourceMembers := getObjectProperties(sourceObject)
-
-			findMember := func(members []*types.ObjectProperty, name string) *types.ObjectProperty {
-				for _, member := range members {
-					if member.Name() == name {
-						return member
-					}
-				}
-				return nil
-			}
+			sourceByName := membersByName(sourceMembers)
+			targetByName := membersByName(targetMembers)
 
 			// Check if target has properties in common with source.
 			inCommon := false
 			for _, targetMember := range targetMembers {
-				if findMember(sourceMembers, targetMember.Name()) != nil {
+				if sourceByName[targetMember.Name()] != nil {
 					inCommon = true
 					break
 				}
@@ -324,23 +329,24 @@ func isAssignableTo(target, source types.Type, inferMap *InferMap, insideTypes m
 
 			// Make sure that every required property in target type is present.
 			for _, targetMember := range targetMembers {
-				if findMember(sourceMembers, targetMember.Name()) == nil {
+				if sourceByName[targetMember.Name()] == nil {
 					if !(inCommon && !targetMember.Required) {
 						return false
 					}
 				}
 			}
+
+			inside := make(map[types.Type]bool, len(insideTypes)+2)
+			for k, v := range insideTypes {
+				inside[k] = v
+			}
+			inside[source] = true
+			inside[target] = true
 			for _, sourceMember := range sourceMembers {
-				targetMember := findMember(targetMembers, sourceMember.Name())
+				targetMember := targetByName[sourceMember.Name()]
 				if targetMember == nil {
 					continue
 				}
-				inside := make(map[types.Type]bool, len(insideTypes)+2)
-				for k, v := range insideTypes {
-					inside[k] = v
-				}
-				inside[source] = true
-				inside[target] = true
 				if !isAssignableTo(targetMember.Type, sourceMember.Type, inferMap, inside) {
 					return false
 				}
