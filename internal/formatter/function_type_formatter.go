@@ -17,8 +17,7 @@ func NewFunctionTypeFormatter(childTypeFormatter TypeFormatter, functions config
 }
 
 func (f *FunctionTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.FunctionType)
-	return ok
+	return isType[*types.FunctionType](t)
 }
 
 func (f *FunctionTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

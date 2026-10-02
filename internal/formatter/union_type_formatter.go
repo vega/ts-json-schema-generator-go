@@ -20,8 +20,7 @@ func NewUnionTypeFormatter(childTypeFormatter TypeFormatter, discriminatorType c
 }
 
 func (f *UnionTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.UnionType)
-	return ok
+	return isType[*types.UnionType](t)
 }
 
 func (f *UnionTypeFormatter) getTypeDefinitions(unionType *types.UnionType) []*schema.Definition {

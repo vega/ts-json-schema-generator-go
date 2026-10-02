@@ -15,8 +15,7 @@ func NewTupleTypeFormatter(childTypeFormatter TypeFormatter) *TupleTypeFormatter
 }
 
 func (f *TupleTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.TupleType)
-	return ok
+	return isType[*types.TupleType](t)
 }
 
 func (f *TupleTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

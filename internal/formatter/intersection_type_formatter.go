@@ -15,8 +15,7 @@ func NewIntersectionTypeFormatter(childTypeFormatter TypeFormatter) *Intersectio
 }
 
 func (f *IntersectionTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.IntersectionType)
-	return ok
+	return isType[*types.IntersectionType](t)
 }
 
 func (f *IntersectionTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

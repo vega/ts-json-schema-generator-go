@@ -11,8 +11,7 @@ type EnumTypeFormatter struct{}
 func NewEnumTypeFormatter() *EnumTypeFormatter { return &EnumTypeFormatter{} }
 
 func (f *EnumTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.EnumType)
-	return ok
+	return isType[*types.EnumType](t)
 }
 
 func (f *EnumTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

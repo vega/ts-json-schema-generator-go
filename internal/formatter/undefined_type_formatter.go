@@ -11,8 +11,7 @@ type UndefinedTypeFormatter struct{}
 func NewUndefinedTypeFormatter() *UndefinedTypeFormatter { return &UndefinedTypeFormatter{} }
 
 func (f *UndefinedTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.UndefinedType)
-	return ok
+	return isType[*types.UndefinedType](t)
 }
 
 func (f *UndefinedTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

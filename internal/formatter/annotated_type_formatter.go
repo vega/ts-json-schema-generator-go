@@ -17,8 +17,7 @@ func NewAnnotatedTypeFormatter(childTypeFormatter TypeFormatter) *AnnotatedTypeF
 }
 
 func (f *AnnotatedTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.AnnotatedType)
-	return ok
+	return isType[*types.AnnotatedType](t)
 }
 
 func (f *AnnotatedTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

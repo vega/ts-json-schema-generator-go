@@ -11,8 +11,7 @@ type UnknownTypeFormatter struct{}
 func NewUnknownTypeFormatter() *UnknownTypeFormatter { return &UnknownTypeFormatter{} }
 
 func (f *UnknownTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.UnknownType)
-	return ok
+	return isType[*types.UnknownType](t)
 }
 
 func (f *UnknownTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

@@ -11,8 +11,7 @@ type NullTypeFormatter struct{}
 func NewNullTypeFormatter() *NullTypeFormatter { return &NullTypeFormatter{} }
 
 func (f *NullTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.NullType)
-	return ok
+	return isType[*types.NullType](t)
 }
 
 func (f *NullTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

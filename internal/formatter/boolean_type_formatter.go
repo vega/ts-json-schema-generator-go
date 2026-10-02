@@ -11,8 +11,7 @@ type BooleanTypeFormatter struct{}
 func NewBooleanTypeFormatter() *BooleanTypeFormatter { return &BooleanTypeFormatter{} }
 
 func (f *BooleanTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.BooleanType)
-	return ok
+	return isType[*types.BooleanType](t)
 }
 
 func (f *BooleanTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

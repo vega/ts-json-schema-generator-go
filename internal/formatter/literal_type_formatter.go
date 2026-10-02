@@ -11,8 +11,7 @@ type LiteralTypeFormatter struct{}
 func NewLiteralTypeFormatter() *LiteralTypeFormatter { return &LiteralTypeFormatter{} }
 
 func (f *LiteralTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.LiteralType)
-	return ok
+	return isType[*types.LiteralType](t)
 }
 
 func (f *LiteralTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

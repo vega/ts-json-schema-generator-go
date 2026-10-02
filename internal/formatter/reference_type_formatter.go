@@ -16,16 +16,11 @@ func NewReferenceTypeFormatter(childTypeFormatter TypeFormatter, encodeRefs bool
 }
 
 func (f *ReferenceTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.ReferenceType)
-	return ok
+	return isType[*types.ReferenceType](t)
 }
 
 func (f *ReferenceTypeFormatter) GetDefinition(t types.Type) *schema.Definition {
-	ref := t.(*types.ReferenceType).Name()
-	if f.encodeRefs {
-		ref = schema.EncodeRef(ref)
-	}
-	return &schema.Definition{Ref: "#/definitions/" + ref}
+	return definitionRef(t.(*types.ReferenceType).Name(), f.encodeRefs)
 }
 
 func (f *ReferenceTypeFormatter) GetChildren(t types.Type) []types.Type {

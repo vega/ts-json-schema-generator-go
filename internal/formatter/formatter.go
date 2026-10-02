@@ -130,3 +130,10 @@ func unique[T comparable](list []T) []T {
 	}
 	return out
 }
+
+// isType reports whether t has the concrete type T; it implements the
+// `type instanceof X` checks of the TypeScript SupportsType methods.
+func isType[T types.Type](t types.Type) bool {
+	_, ok := t.(T)
+	return ok
+}

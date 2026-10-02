@@ -11,8 +11,7 @@ type StringTypeFormatter struct{}
 func NewStringTypeFormatter() *StringTypeFormatter { return &StringTypeFormatter{} }
 
 func (f *StringTypeFormatter) SupportsType(t types.Type) bool {
-	_, ok := t.(*types.StringType)
-	return ok
+	return isType[*types.StringType](t)
 }
 
 func (f *StringTypeFormatter) GetDefinition(t types.Type) *schema.Definition {

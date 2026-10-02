@@ -75,20 +75,13 @@ func (f *LiteralUnionTypeFormatter) GetDefinition(t types.Type) *schema.Definiti
 		case *types.EnumType:
 			for _, value := range member.Values {
 				appendName(typeName(value))
-			}
-		case *types.LiteralType:
-			appendName(typeName(member.Value))
-		default:
-			appendName("null")
-		}
-		switch member := item.(type) {
-		case *types.EnumType:
-			for _, value := range member.Values {
 				appendValue(value)
 			}
 		case *types.LiteralType:
+			appendName(typeName(member.Value))
 			appendValue(member.Value)
 		default:
+			appendName("null")
 			appendValue(nil)
 		}
 	}
