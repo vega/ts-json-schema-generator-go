@@ -36,6 +36,20 @@ func repoRoot(t *testing.T) string {
 	return filepath.Dir(filepath.Dir(filepath.Dir(file)))
 }
 
+// requireNpmSources skips the test when an npm-installed source file is
+// missing, except in CI (CI env var set), where a missing file means
+// `npm ci` failed and the test must fail instead of passing silently.
+func requireNpmSources(t *testing.T, path string) {
+	t.Helper()
+	if _, err := os.Stat(path); err != nil {
+		msg := fmt.Sprintf("npm sources not installed (run npm ci): %v", err)
+		if os.Getenv("CI") != "" {
+			t.Fatal(msg)
+		}
+		t.Skip(msg)
+	}
+}
+
 // TestMain switches the working directory to the repo root so that node-key
 // hashes (which embed cwd-relative filenames, matching the TypeScript
 // implementation's use of process.cwd()) agree with the golden schemas that

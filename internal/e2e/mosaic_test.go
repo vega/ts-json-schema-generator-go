@@ -29,12 +29,11 @@ func TestMosaic(t *testing.T) {
 	root := repoRoot(t)
 
 	specDir := filepath.Join(root, "node_modules", "@uwdata", "mosaic-spec")
-	if _, err := os.Stat(filepath.Join(specDir, "src", "spec", "Spec.ts")); err != nil {
-		t.Skip("mosaic-spec sources not installed (run npm install)")
-	}
+	entry := filepath.Join(specDir, "src", "spec", "Spec.ts")
+	requireNpmSources(t, entry)
 
 	cfg := config.Default()
-	cfg.Path = filepath.Join(specDir, "src", "spec", "Spec.ts")
+	cfg.Path = entry
 	cfg.Types = []string{"Spec"}
 	cfg.EncodeRefs = false
 	cfg.SkipTypeCheck = true
