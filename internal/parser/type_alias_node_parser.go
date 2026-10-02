@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"strings"
-
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
 	"github.com/microsoft/typescript-go/shim/scanner"
@@ -64,11 +62,5 @@ func (p *TypeAliasNodeParser) getTypeName(node *ast.Node, ctx *Context) string {
 		return fullName
 	}
 
-	argumentIds := make([]string, len(arguments))
-	for i, argument := range arguments {
-		if argument != nil {
-			argumentIds[i] = argument.Name()
-		}
-	}
-	return fullName + "<" + strings.Join(argumentIds, ",") + ">"
+	return fullName + "<" + joinTypes(arguments, types.Type.Name) + ">"
 }

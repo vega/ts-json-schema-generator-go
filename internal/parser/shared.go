@@ -4,6 +4,8 @@ package parser
 // repeats them as private methods in each of the corresponding files.
 
 import (
+	"strings"
+
 	"github.com/microsoft/typescript-go/shim/ast"
 	"github.com/microsoft/typescript-go/shim/checker"
 
@@ -26,6 +28,18 @@ func singleOrUnion(ts []types.Type) types.Type {
 		return ts[0]
 	}
 	return types.NewUnionType(ts)
+}
+
+// joinTypes renders each type with render and joins the results with commas.
+// A nil type renders as the empty string.
+func joinTypes(ts []types.Type, render func(types.Type) string) string {
+	rendered := make([]string, len(ts))
+	for i, t := range ts {
+		if t != nil {
+			rendered[i] = render(t)
+		}
+	}
+	return strings.Join(rendered, ",")
 }
 
 // newArgumentContext builds a sub context for node whose arguments are the
