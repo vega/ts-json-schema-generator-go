@@ -65,7 +65,7 @@ func GetAllOfDefinitionReducer(childTypeFormatter TypeFormatter) func(*schema.De
 			if len(additionalProps) > 1 {
 				definition.AdditionalProperties = &schema.Definition{AnyOf: additionalProps}
 			} else if len(additionalProps) == 1 {
-				if isEmptyDefinition(additionalProps[0]) {
+				if additionalProps[0].IsEmpty() {
 					definition.AdditionalProperties = nil
 				} else {
 					definition.AdditionalProperties = additionalProps[0]
@@ -205,18 +205,6 @@ func castTypeArray(t any) []string {
 		return out
 	}
 	return nil
-}
-
-// isEmptyDefinition reports whether the definition has no keys set
-// (`Object.keys(def).length === 0` in the TypeScript source).
-func isEmptyDefinition(d *schema.Definition) bool {
-	return d.ID == "" && d.Schema == "" && d.Ref == "" && d.Comment == "" && d.Title == "" &&
-		d.Type == nil && d.Format == "" && d.Enum == nil && d.Const == nil && d.Not == nil &&
-		d.AllOf == nil && d.AnyOf == nil && d.OneOf == nil && d.If == nil && d.Then == nil &&
-		d.Else == nil && d.Items == nil && d.MinItems == nil && d.MaxItems == nil &&
-		d.AdditionalItems == nil && d.Properties.Len() == 0 && len(d.Required) == 0 &&
-		d.AdditionalProperties == nil && d.PatternProperties == nil && d.PropertyNames == nil &&
-		d.Discriminator == nil && d.Definitions == nil && len(d.Extra) == 0
 }
 
 // isTruthyOrUndefined mirrors `props || props === undefined` for

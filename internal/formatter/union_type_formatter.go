@@ -179,5 +179,5 @@ func (f *UnionTypeFormatter) GetChildren(t types.Type) []types.Type {
 func isOnlyAnyOf(def *schema.Definition) bool {
 	check := *def
 	check.AnyOf = nil
-	return isEmptyDefinition(&check)
+	return check.IsEmpty()
 }

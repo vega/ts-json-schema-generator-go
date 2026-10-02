@@ -90,6 +90,18 @@ func (d *Definition) HasType(name string) bool {
 	return false
 }
 
+// IsEmpty reports whether the definition has no keys set
+// (`Object.keys(def).length === 0` in the TypeScript source).
+func (d *Definition) IsEmpty() bool {
+	return d.ID == "" && d.Schema == "" && d.Ref == "" && d.Comment == "" && d.Title == "" &&
+		d.Type == nil && d.Format == "" && d.Enum == nil && d.Const == nil && d.Not == nil &&
+		d.AllOf == nil && d.AnyOf == nil && d.OneOf == nil && d.If == nil && d.Then == nil &&
+		d.Else == nil && d.Items == nil && d.MinItems == nil && d.MaxItems == nil &&
+		d.AdditionalItems == nil && d.Properties.Len() == 0 && len(d.Required) == 0 &&
+		d.AdditionalProperties == nil && d.PatternProperties == nil && d.PropertyNames == nil &&
+		d.Discriminator == nil && d.Definitions == nil && len(d.Extra) == 0
+}
+
 // Properties is an insertion-ordered map of property name to definition.
 type Properties struct {
 	keys   []string

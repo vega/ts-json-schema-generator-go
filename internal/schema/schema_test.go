@@ -2,8 +2,54 @@ package schema
 
 import (
 	"math"
+	"reflect"
 	"testing"
 )
+
+func TestDefinitionIsEmpty(t *testing.T) {
+	if !(&Definition{}).IsEmpty() {
+		t.Fatal("zero Definition is not empty")
+	}
+	if !(&Definition{Properties: NewProperties()}).IsEmpty() {
+		t.Error("Definition with empty Properties is not empty")
+	}
+
+	fields := reflect.TypeFor[Definition]()
+	for i := range fields.NumField() {
+		field := fields.Field(i)
+		t.Run(field.Name, func(t *testing.T) {
+			var def Definition
+			reflect.ValueOf(&def).Elem().Field(i).Set(nonEmptyValue(field.Type))
+			if def.IsEmpty() {
+				t.Errorf("IsEmpty() = true with %s set", field.Name)
+			}
+		})
+	}
+}
+
+// nonEmptyValue returns a value of type t that counts as a set key.
+func nonEmptyValue(t reflect.Type) reflect.Value {
+	if t == reflect.TypeFor[*Properties]() {
+		props := NewProperties()
+		props.Set("a", &Definition{})
+		return reflect.ValueOf(props)
+	}
+	switch t.Kind() {
+	case reflect.String:
+		return reflect.ValueOf("x").Convert(t)
+	case reflect.Interface:
+		return reflect.ValueOf("x")
+	case reflect.Pointer:
+		return reflect.New(t.Elem())
+	case reflect.Slice:
+		return reflect.Append(reflect.MakeSlice(t, 0, 1), reflect.Zero(t.Elem()))
+	case reflect.Map:
+		m := reflect.MakeMap(t)
+		m.SetMapIndex(reflect.ValueOf("a").Convert(t.Key()), reflect.Zero(t.Elem()))
+		return m
+	}
+	panic("nonEmptyValue: unsupported field kind " + t.Kind().String())
+}
 
 func TestEncodeRef(t *testing.T) {
 	// Matches encodeURIComponent: A-Za-z0-9 -_.!~*'() unescaped.
