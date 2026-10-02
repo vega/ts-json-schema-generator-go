@@ -60,63 +60,40 @@ func (f *AnnotatedTypeFormatter) GetChildren(t types.Type) []types.Type {
 	return f.childTypeFormatter.GetChildren(t.(*types.AnnotatedType).Type)
 }
 
+// stringFields maps string-valued JSON Schema keywords to their typed field.
+var stringFields = map[string]func(*schema.Definition) *string{
+	"$id":      func(d *schema.Definition) *string { return &d.ID },
+	"$schema":  func(d *schema.Definition) *string { return &d.Schema },
+	"$ref":     func(d *schema.Definition) *string { return &d.Ref },
+	"$comment": func(d *schema.Definition) *string { return &d.Comment },
+	"title":    func(d *schema.Definition) *string { return &d.Title },
+	"format":   func(d *schema.Definition) *string { return &d.Format },
+}
+
 // applyAnnotation merges one annotation keyword into the definition. In the
 // TypeScript implementation this is a plain object spread; here known JSON
 // Schema keywords land on the corresponding struct fields (clearing them and
 // falling back to Extra when the raw annotation value cannot be represented
 // in the typed field), and everything else goes into Extra.
 func applyAnnotation(def *schema.Definition, key string, value any) {
-	// setRaw stores the raw value in Extra after clearing the typed field so
-	// the keyword is not emitted twice.
-	setRaw := func(clear func()) {
-		clear()
-		def.SetExtra(key, value)
+	if field, ok := stringFields[key]; ok {
+		s, isString := value.(string)
+		*field(def) = s
+		if !isString {
+			def.SetExtra(key, value)
+		}
+		return
 	}
 
 	switch key {
-	case "$id":
-		if s, ok := value.(string); ok {
-			def.ID = s
-		} else {
-			setRaw(func() { def.ID = "" })
-		}
-	case "$schema":
-		if s, ok := value.(string); ok {
-			def.Schema = s
-		} else {
-			setRaw(func() { def.Schema = "" })
-		}
-	case "$ref":
-		if s, ok := value.(string); ok {
-			def.Ref = s
-		} else {
-			setRaw(func() { def.Ref = "" })
-		}
-	case "$comment":
-		if s, ok := value.(string); ok {
-			def.Comment = s
-		} else {
-			setRaw(func() { def.Comment = "" })
-		}
-	case "title":
-		if s, ok := value.(string); ok {
-			def.Title = s
-		} else {
-			setRaw(func() { def.Title = "" })
-		}
-	case "format":
-		if s, ok := value.(string); ok {
-			def.Format = s
-		} else {
-			setRaw(func() { def.Format = "" })
-		}
 	case "type":
 		def.Type = value
 	case "enum":
 		if list, ok := value.([]any); ok {
 			def.Enum = list
 		} else {
-			setRaw(func() { def.Enum = nil })
+			def.Enum = nil
+			def.SetExtra(key, value)
 		}
 	case "const":
 		def.Const = schema.Ptr(value)
@@ -127,53 +104,61 @@ func applyAnnotation(def *schema.Definition, key string, value any) {
 	case "additionalProperties":
 		def.AdditionalProperties = value
 	case "minItems":
-		if n, ok := toInt(value); ok {
-			def.MinItems = schema.IntPtr(n)
-		} else {
-			setRaw(func() { def.MinItems = nil })
-		}
+		def.MinItems = intOrRaw(def, key, value)
 	case "maxItems":
-		if n, ok := toInt(value); ok {
-			def.MaxItems = schema.IntPtr(n)
-		} else {
-			setRaw(func() { def.MaxItems = nil })
-		}
+		def.MaxItems = intOrRaw(def, key, value)
 	case "required":
 		if list, ok := toStringSlice(value); ok {
 			def.Required = list
 		} else {
-			setRaw(func() { def.Required = nil })
+			def.Required = nil
+			def.SetExtra(key, value)
 		}
 	case "not", "allOf", "anyOf", "oneOf", "if", "then", "else",
 		"properties", "patternProperties", "propertyNames", "discriminator":
-		setRaw(func() {
-			switch key {
-			case "not":
-				def.Not = nil
-			case "allOf":
-				def.AllOf = nil
-			case "anyOf":
-				def.AnyOf = nil
-			case "oneOf":
-				def.OneOf = nil
-			case "if":
-				def.If = nil
-			case "then":
-				def.Then = nil
-			case "else":
-				def.Else = nil
-			case "properties":
-				def.Properties = nil
-			case "patternProperties":
-				def.PatternProperties = nil
-			case "propertyNames":
-				def.PropertyNames = nil
-			case "discriminator":
-				def.Discriminator = nil
-			}
-		})
+		clearField(def, key)
+		def.SetExtra(key, value)
 	default:
 		def.SetExtra(key, value)
+	}
+}
+
+// intOrRaw returns value as an int for a typed field, or stores the raw
+// value in Extra and returns nil when it is not a number.
+func intOrRaw(def *schema.Definition, key string, value any) *int {
+	if n, ok := toInt(value); ok {
+		return schema.IntPtr(n)
+	}
+	def.SetExtra(key, value)
+	return nil
+}
+
+// clearField resets the typed field of a structural keyword so that a raw
+// annotation stored in Extra is not emitted twice.
+func clearField(def *schema.Definition, key string) {
+	switch key {
+	case "not":
+		def.Not = nil
+	case "allOf":
+		def.AllOf = nil
+	case "anyOf":
+		def.AnyOf = nil
+	case "oneOf":
+		def.OneOf = nil
+	case "if":
+		def.If = nil
+	case "then":
+		def.Then = nil
+	case "else":
+		def.Else = nil
+	case "properties":
+		def.Properties = nil
+	case "patternProperties":
+		def.PatternProperties = nil
+	case "propertyNames":
+		def.PropertyNames = nil
+	case "discriminator":
+		def.Discriminator = nil
 	}
 }
 
