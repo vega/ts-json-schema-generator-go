@@ -29,7 +29,6 @@ var configFields = func() map[string]reflect.Type {
 	fields := map[string]reflect.Type{}
 	configType := reflect.TypeFor[config.Config]()
 	for field := range configType.Fields() {
-		field := field
 		name, _, _ := strings.Cut(field.Tag.Get("json"), ",")
 		if name == "" || name == "-" || harnessKeys[name] {
 			continue

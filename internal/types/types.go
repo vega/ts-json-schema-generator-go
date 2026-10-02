@@ -580,7 +580,7 @@ func IsDeepLiteralUnion(t Type) bool {
 }
 
 // UniqueTypes de-duplicates by type ID, keeping first occurrences in order.
-// Nil interface values are dropped.
+// Nil interface values are dropped; T must be an interface type for that.
 func UniqueTypes[T Type](list []T) []T {
 	seen := make(map[string]bool, len(list))
 	out := make([]T, 0, len(list))
