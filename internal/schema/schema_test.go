@@ -53,6 +53,61 @@ func TestDefinitionMarshal(t *testing.T) {
 	}
 }
 
+// TestMarshalStableUnsortedDoesNotEscapeHTML pins the exact bytes of the
+// --unstable path. Every nested writer (properties, definitions,
+// patternProperties, Extra) must keep <, > and & literal, like JSON.stringify.
+func TestMarshalStableUnsortedDoesNotEscapeHTML(t *testing.T) {
+	props := NewProperties()
+	props.Set("<b>", &Definition{Type: "string", Const: Ptr("<a>")})
+	props.Set("a&b", &Definition{Enum: []any{"x>y", 1.0}})
+	def := &Definition{
+		Ref: "#/definitions/T%3CU%3E",
+		Definitions: map[string]*Definition{
+			"T<U>": {
+				Type:              "object",
+				Properties:        props,
+				PatternProperties: map[string]*Definition{"^<.*>$": {Type: "number"}},
+			},
+		},
+	}
+	def.SetExtra("description", "a < b & c")
+
+	got, err := MarshalStable(def, false, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `{
+  "$ref": "#/definitions/T%3CU%3E",
+  "description": "a < b & c",
+  "definitions": {
+    "T<U>": {
+      "type": "object",
+      "properties": {
+        "<b>": {
+          "type": "string",
+          "const": "<a>"
+        },
+        "a&b": {
+          "enum": [
+            "x>y",
+            1
+          ]
+        }
+      },
+      "patternProperties": {
+        "^<.*>$": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}
+`
+	if string(got) != want {
+		t.Errorf("unsorted marshal:\n got %s\nwant %s", got, want)
+	}
+}
+
 func TestDefinitionMarshalNonFiniteNumbers(t *testing.T) {
 	// JSON.stringify renders Infinity and NaN as null; `type X = 1e999`
 	// reaches the schema as +Inf.
