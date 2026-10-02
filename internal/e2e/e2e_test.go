@@ -17,15 +17,8 @@ import (
 
 	"github.com/vega/ts-json-schema-generator-go/internal/config"
 	"github.com/vega/ts-json-schema-generator-go/internal/factory"
+	"github.com/vega/ts-json-schema-generator-go/internal/fixtures"
 )
-
-type manifestEntry struct {
-	Name       string         `json:"name"`
-	Types      []string       `json:"types,omitempty"`
-	Config     map[string]any `json:"config,omitempty"`
-	MainTsOnly bool           `json:"mainTsOnly,omitempty"`
-	Skip       string         `json:"skip,omitempty"`
-}
 
 func repoRoot(t *testing.T) string {
 	t.Helper()
@@ -59,7 +52,7 @@ func TestValidData(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cannot read fixtures manifest (run `go run ./tools/extract_fixtures`): %v", err)
 	}
-	var manifest []manifestEntry
+	var manifest []fixtures.Entry
 	if err := json.Unmarshal(data, &manifest); err != nil {
 		t.Fatalf("cannot parse fixtures manifest: %v", err)
 	}
@@ -80,7 +73,7 @@ func TestValidData(t *testing.T) {
 	}
 }
 
-func runFixture(t *testing.T, root string, entry manifestEntry) {
+func runFixture(t *testing.T, root string, entry fixtures.Entry) {
 	t.Helper()
 
 	cfg, err := fixtureConfig(root, entry)
@@ -127,61 +120,32 @@ func runFixture(t *testing.T, root string, entry manifestEntry) {
 	}
 }
 
-func fixtureConfig(root string, entry manifestEntry) (*config.Config, error) {
+func fixtureConfig(root string, entry fixtures.Entry) (*config.Config, error) {
+	if err := fixtures.ValidateConfig(entry.Config); err != nil {
+		return nil, fmt.Errorf("manifest: %w", err)
+	}
+
 	cfg := config.Default()
 	// Type checking the fixtures is slow and is covered upstream; skip it.
 	cfg.SkipTypeCheck = true
-	cfg.Types = entry.Types
+	if entry.Config != nil {
+		data, err := json.Marshal(entry.Config)
+		if err != nil {
+			return nil, err
+		}
+		if err := json.Unmarshal(data, cfg); err != nil {
+			return nil, fmt.Errorf("manifest config: %w", err)
+		}
+	}
 
+	cfg.Types = entry.Types
 	glob := "*.ts"
 	if entry.MainTsOnly {
 		glob = "main.ts"
 	}
 	cfg.Path = filepath.Join(root, "test", "valid-data", entry.Name, glob)
-
-	for key, value := range entry.Config {
-		switch key {
-		case "jsDoc":
-			cfg.JSDoc = config.JSDocMode(value.(string))
-		case "expose":
-			cfg.Expose = config.Expose(value.(string))
-		case "schemaId":
-			cfg.SchemaID = value.(string)
-		case "discriminatorType":
-			cfg.DiscriminatorType = config.DiscriminatorType(value.(string))
-		case "functions":
-			cfg.Functions = config.FunctionOptions(value.(string))
-		case "tsconfig":
-			tsconfig := value.(string)
-			if !filepath.IsAbs(tsconfig) {
-				tsconfig = filepath.Join(root, tsconfig)
-			}
-			cfg.Tsconfig = tsconfig
-		case "topRef":
-			cfg.TopRef = value.(bool)
-		case "additionalProperties":
-			cfg.AdditionalProperties = value.(bool)
-		case "sortProps":
-			cfg.SortProps = value.(bool)
-		case "encodeRefs":
-			cfg.EncodeRefs = value.(bool)
-		case "markdownDescription":
-			cfg.MarkdownDescription = value.(bool)
-		case "fullDescription":
-			cfg.FullDescription = value.(bool)
-		case "minify":
-			cfg.Minify = value.(bool)
-		case "strictTuples":
-			cfg.StrictTuples = value.(bool)
-		case "skipTypeCheck":
-			cfg.SkipTypeCheck = value.(bool)
-		case "extraTags":
-			for _, item := range value.([]any) {
-				cfg.ExtraTags = append(cfg.ExtraTags, item.(string))
-			}
-		default:
-			return nil, fmt.Errorf("unsupported config key %q in manifest", key)
-		}
+	if _, ok := entry.Config["tsconfig"]; ok && !filepath.IsAbs(cfg.Tsconfig) {
+		cfg.Tsconfig = filepath.Join(root, cfg.Tsconfig)
 	}
 	return cfg, nil
 }

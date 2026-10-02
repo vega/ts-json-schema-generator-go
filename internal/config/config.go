@@ -42,40 +42,43 @@ const (
 
 // Config is the full set of generator options. Use Default for the defaults;
 // the zero value is not a usable configuration.
+//
+// The JSON names are the option names of src/Config.ts. Unlike there, "type"
+// only decodes from an array of names, not from a single string.
 type Config struct {
 	// Path is a glob pattern for source TypeScript files to process. If not
 	// provided, falls back to files from tsconfig.
-	Path string
+	Path string `json:"path"`
 	// Types are the type names to generate schemas for; "*" means all.
-	Types []string
+	Types []string `json:"type"`
 	// Minify controls whitespace in the output JSON.
-	Minify bool
+	Minify bool `json:"minify"`
 	// SchemaID sets the $id property of the generated schema.
-	SchemaID string
+	SchemaID string `json:"schemaId"`
 	// Tsconfig is the path to a tsconfig.json used for compilation.
-	Tsconfig string
-	Expose   Expose
+	Tsconfig string `json:"tsconfig"`
+	Expose   Expose `json:"expose"`
 	// TopRef wraps the root type in a $ref definition.
-	TopRef bool
-	JSDoc  JSDocMode
+	TopRef bool      `json:"topRef"`
+	JSDoc  JSDocMode `json:"jsDoc"`
 	// MarkdownDescription adds markdownDescription alongside description.
-	MarkdownDescription bool
+	MarkdownDescription bool `json:"markdownDescription"`
 	// FullDescription includes the raw JSDoc comment as fullDescription.
-	FullDescription bool
+	FullDescription bool `json:"fullDescription"`
 	// SortProps sorts object properties alphabetically.
-	SortProps bool
+	SortProps bool `json:"sortProps"`
 	// StrictTuples disallows additional items on tuples.
-	StrictTuples bool
+	StrictTuples bool `json:"strictTuples"`
 	// SkipTypeCheck skips TypeScript semantic diagnostics.
-	SkipTypeCheck bool
+	SkipTypeCheck bool `json:"skipTypeCheck"`
 	// EncodeRefs URI-encodes $ref values.
-	EncodeRefs bool
+	EncodeRefs bool `json:"encodeRefs"`
 	// ExtraTags are additional JSDoc tag names to include in the schema.
-	ExtraTags []string
+	ExtraTags []string `json:"extraTags"`
 	// AdditionalProperties is the default for objects without index signatures.
-	AdditionalProperties bool
-	DiscriminatorType    DiscriminatorType
-	Functions            FunctionOptions
+	AdditionalProperties bool              `json:"additionalProperties"`
+	DiscriminatorType    DiscriminatorType `json:"discriminatorType"`
+	Functions            FunctionOptions   `json:"functions"`
 }
 
 // Default returns the default configuration (DEFAULT_CONFIG in src/Config.ts).
