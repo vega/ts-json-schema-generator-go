@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
-	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -18,30 +17,13 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/config"
 	"github.com/vega/ts-json-schema-generator-go/internal/factory"
 	"github.com/vega/ts-json-schema-generator-go/internal/fixtures"
+	"github.com/vega/ts-json-schema-generator-go/internal/testutil"
 )
 
-func repoRoot(t *testing.T) string {
-	t.Helper()
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("cannot determine caller file")
-	}
-	return filepath.Dir(filepath.Dir(filepath.Dir(file)))
-}
+var repoRoot = testutil.RepoRoot
 
-// TestMain switches the working directory to the repo root so that node-key
-// hashes (which embed cwd-relative filenames, matching the TypeScript
-// implementation's use of process.cwd()) agree with the golden schemas that
-// upstream generated from the repo root.
 func TestMain(m *testing.M) {
-	_, file, _, ok := runtime.Caller(0)
-	if ok {
-		root := filepath.Dir(filepath.Dir(filepath.Dir(file)))
-		if err := os.Chdir(root); err != nil {
-			fmt.Fprintln(os.Stderr, "cannot chdir to repo root:", err)
-			os.Exit(1)
-		}
-	}
+	testutil.ChdirRepoRoot()
 	os.Exit(m.Run())
 }
 

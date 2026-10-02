@@ -2,26 +2,17 @@ package factory
 
 import (
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/config"
+	"github.com/vega/ts-json-schema-generator-go/internal/testutil"
 )
-
-func repoRoot(t *testing.T) string {
-	t.Helper()
-	_, file, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatal("cannot determine caller file")
-	}
-	return filepath.Dir(filepath.Dir(filepath.Dir(file)))
-}
 
 func TestCreateProgramFromGlob(t *testing.T) {
 	cfg := config.Default()
 	cfg.SkipTypeCheck = true
-	cfg.Path = filepath.Join(repoRoot(t), "test", "valid-data", "type-union", "*.ts")
+	cfg.Path = filepath.Join(testutil.RepoRoot(t), "test", "valid-data", "type-union", "*.ts")
 
 	program, checker, release, err := CreateProgram(cfg)
 	if err != nil {
@@ -41,7 +32,7 @@ func TestCreateProgramFromGlob(t *testing.T) {
 
 func TestCreateProgramTypeCheck(t *testing.T) {
 	cfg := config.Default()
-	cfg.Path = filepath.Join(repoRoot(t), "test", "valid-data", "type-union", "main.ts")
+	cfg.Path = filepath.Join(testutil.RepoRoot(t), "test", "valid-data", "type-union", "main.ts")
 
 	program, _, release, err := CreateProgram(cfg)
 	if err != nil {
@@ -57,7 +48,7 @@ func TestCreateProgramTypeCheck(t *testing.T) {
 func TestCreateProgramDoubleStarGlob(t *testing.T) {
 	cfg := config.Default()
 	cfg.SkipTypeCheck = true
-	cfg.Path = filepath.Join(repoRoot(t), "test", "valid-data", "multiple-roots1", "**", "*.ts")
+	cfg.Path = filepath.Join(testutil.RepoRoot(t), "test", "valid-data", "multiple-roots1", "**", "*.ts")
 
 	program, _, release, err := CreateProgram(cfg)
 	if err != nil {
@@ -72,7 +63,7 @@ func TestCreateProgramDoubleStarGlob(t *testing.T) {
 
 func TestCreateProgramNoInputFiles(t *testing.T) {
 	cfg := config.Default()
-	cfg.Path = filepath.Join(repoRoot(t), "test", "valid-data", "type-union", "*.does-not-exist")
+	cfg.Path = filepath.Join(testutil.RepoRoot(t), "test", "valid-data", "type-union", "*.does-not-exist")
 
 	_, _, _, err := CreateProgram(cfg)
 	if err == nil || !strings.Contains(err.Error(), "no input files") {
@@ -83,7 +74,7 @@ func TestCreateProgramNoInputFiles(t *testing.T) {
 func TestCreateProgramFromTsconfig(t *testing.T) {
 	cfg := config.Default()
 	cfg.SkipTypeCheck = true
-	cfg.Tsconfig = filepath.Join(repoRoot(t), "test", "config", "tsconfig-support", "tsconfig.json")
+	cfg.Tsconfig = filepath.Join(testutil.RepoRoot(t), "test", "config", "tsconfig-support", "tsconfig.json")
 
 	program, _, release, err := CreateProgram(cfg)
 	if err != nil {
