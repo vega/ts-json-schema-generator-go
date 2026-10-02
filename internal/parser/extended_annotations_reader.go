@@ -186,17 +186,7 @@ func (r *ExtendedAnnotationsReader) symbolDocumentationCommentWithInheritance(sy
 		if name == nil {
 			continue
 		}
-		var clauses *ast.NodeList
-		switch owner.Kind {
-		case ast.KindInterfaceDeclaration:
-			clauses = owner.AsInterfaceDeclaration().HeritageClauses
-		case ast.KindClassDeclaration:
-			clauses = owner.AsClassDeclaration().HeritageClauses
-		}
-		if clauses == nil {
-			continue
-		}
-		for _, heritage := range clauses.Nodes {
+		for _, heritage := range heritageClausesOf(owner) {
 			for _, baseExpr := range heritage.AsHeritageClause().Types.Nodes {
 				baseType := r.typeChecker.GetTypeAtLocation(baseExpr)
 				if baseType == nil {
