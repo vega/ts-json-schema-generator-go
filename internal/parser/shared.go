@@ -8,26 +8,46 @@ import (
 	"github.com/microsoft/typescript-go/shim/checker"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/tsutils"
+	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
+
+// createTypes parses each node in the given context.
+func createTypes(child NodeParser, nodes []*ast.Node, ctx *Context) []types.Type {
+	result := make([]types.Type, len(nodes))
+	for i, node := range nodes {
+		result[i] = child.CreateType(node, ctx, nil)
+	}
+	return result
+}
+
+// singleOrUnion returns the only element of ts, or a union of all elements.
+func singleOrUnion(ts []types.Type) types.Type {
+	if len(ts) == 1 {
+		return ts[0]
+	}
+	return types.NewUnionType(ts)
+}
+
+// newArgumentContext builds a sub context for node whose arguments are the
+// given nodes, each parsed in the parent context.
+func newArgumentContext(child NodeParser, node *ast.Node, arguments []*ast.Node, parentContext *Context) *Context {
+	subContext := NewContext(node)
+	for _, argument := range createTypes(child, arguments, parentContext) {
+		subContext.PushArgument(argument)
+	}
+	return subContext
+}
 
 // newTypeArgumentContext builds the sub context for a node's explicit type
 // arguments, each parsed in the parent context.
 func newTypeArgumentContext(child NodeParser, node *ast.Node, parentContext *Context) *Context {
-	subContext := NewContext(node)
-	for _, typeArg := range node.TypeArguments() {
-		subContext.PushArgument(child.CreateType(typeArg, parentContext, nil))
-	}
-	return subContext
+	return newArgumentContext(child, node, node.TypeArguments(), parentContext)
 }
 
 // newCallArgumentContext builds the sub context for the value arguments of a
 // call or new expression, each parsed in the parent context.
 func newCallArgumentContext(child NodeParser, node *ast.Node, parentContext *Context) *Context {
-	subContext := NewContext(node)
-	for _, arg := range node.Arguments() {
-		subContext.PushArgument(child.CreateType(arg, parentContext, nil))
-	}
-	return subContext
+	return newArgumentContext(child, node, node.Arguments(), parentContext)
 }
 
 // expressionDeclaration resolves the declaration standing behind the type of a

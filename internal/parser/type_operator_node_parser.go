@@ -62,9 +62,5 @@ func (p *TypeOperatorNodeParser) CreateType(node *ast.Node, ctx *Context, _ *typ
 		return types.NewUnionType(append(keyTypes, &types.StringType{}))
 	}
 
-	if len(keys) == 1 {
-		return keys[0]
-	}
-
-	return types.NewUnionType(keyTypes)
+	return singleOrUnion(keyTypes)
 }

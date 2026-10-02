@@ -24,11 +24,7 @@ func (p *IntersectionNodeParser) SupportsNode(node *ast.Node) bool {
 }
 
 func (p *IntersectionNodeParser) CreateType(node *ast.Node, ctx *Context, _ *types.ReferenceType) types.Type {
-	subnodes := node.AsIntersectionTypeNode().Types.Nodes
-	memberTypes := make([]types.Type, len(subnodes))
-	for i, subnode := range subnodes {
-		memberTypes[i] = p.childNodeParser.CreateType(subnode, ctx, nil)
-	}
+	memberTypes := createTypes(p.childNodeParser, node.AsIntersectionTypeNode().Types.Nodes, ctx)
 
 	// If any type is never, the intersection type resolves to never.
 	for _, typ := range memberTypes {

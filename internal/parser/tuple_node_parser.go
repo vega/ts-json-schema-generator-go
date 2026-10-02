@@ -22,10 +22,5 @@ func (p *TupleNodeParser) SupportsNode(node *ast.Node) bool {
 }
 
 func (p *TupleNodeParser) CreateType(node *ast.Node, ctx *Context, _ *types.ReferenceType) types.Type {
-	elements := node.AsTupleTypeNode().Elements.Nodes
-	memberTypes := make([]types.Type, len(elements))
-	for i, item := range elements {
-		memberTypes[i] = p.childNodeParser.CreateType(item, ctx, nil)
-	}
-	return types.NewTupleType(memberTypes)
+	return types.NewTupleType(createTypes(p.childNodeParser, node.AsTupleTypeNode().Elements.Nodes, ctx))
 }
