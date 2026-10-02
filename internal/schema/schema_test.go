@@ -133,7 +133,7 @@ func TestDefinitionMarshal(t *testing.T) {
 // patternProperties, Extra) must keep <, > and & literal, like JSON.stringify.
 func TestMarshalStableUnsortedDoesNotEscapeHTML(t *testing.T) {
 	props := NewProperties()
-	props.Set("<b>", &Definition{Type: "string", Const: Ptr("<a>")})
+	props.Set("<b>", &Definition{Type: "string", Const: new(any("<a>"))})
 	props.Set("a&b", &Definition{Enum: []any{"x>y", 1.0}})
 	def := &Definition{
 		Ref: "#/definitions/T%3CU%3E",

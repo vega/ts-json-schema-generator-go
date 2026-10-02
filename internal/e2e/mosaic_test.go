@@ -10,6 +10,7 @@ import (
 
 	"github.com/vega/ts-json-schema-generator-go/internal/config"
 	"github.com/vega/ts-json-schema-generator-go/internal/factory"
+	"github.com/vega/ts-json-schema-generator-go/internal/testutil"
 )
 
 // TestMosaic generates the Mosaic spec schema from the @uwdata/mosaic-spec sources (installed from npm) using the same
@@ -26,7 +27,7 @@ import (
 // The comparison therefore requires our CSSStyles properties to be a
 // superset of the published ones and everything else to match exactly.
 func TestMosaic(t *testing.T) {
-	root := repoRoot(t)
+	root := testutil.RepoRoot(t)
 
 	specDir := filepath.Join(root, "node_modules", "@uwdata", "mosaic-spec")
 	entry := filepath.Join(specDir, "src", "spec", "Spec.ts")

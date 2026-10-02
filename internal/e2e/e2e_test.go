@@ -20,8 +20,6 @@ import (
 	"github.com/vega/ts-json-schema-generator-go/internal/testutil"
 )
 
-var repoRoot = testutil.RepoRoot
-
 // requireNpmSources skips the test when an npm-installed source file is
 // missing, except in CI (CI env var set), where a missing file means
 // `npm ci` failed and the test must fail instead of passing silently.
@@ -42,7 +40,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestValidData(t *testing.T) {
-	root := repoRoot(t)
+	root := testutil.RepoRoot(t)
 
 	data, err := os.ReadFile(filepath.Join(root, "test", "fixtures-manifest.json"))
 	if err != nil {
