@@ -32,8 +32,6 @@ func (m *InferMap) Set(key string, t types.Type) {
 	m.values[key] = t
 }
 
-func (m *InferMap) Len() int { return len(m.values) }
-
 // Keys returns the keys in insertion order.
 func (m *InferMap) Keys() []string { return m.keys }
 

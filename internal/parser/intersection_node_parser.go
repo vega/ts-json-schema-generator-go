@@ -2,7 +2,6 @@ package parser
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
-	"github.com/microsoft/typescript-go/shim/checker"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/types"
 )
@@ -11,12 +10,11 @@ import (
 // (src/NodeParser/IntersectionNodeParser.ts). The translate() helper lives in
 // types.Translate.
 type IntersectionNodeParser struct {
-	typeChecker     *checker.Checker
 	childNodeParser NodeParser
 }
 
-func NewIntersectionNodeParser(typeChecker *checker.Checker, childNodeParser NodeParser) *IntersectionNodeParser {
-	return &IntersectionNodeParser{typeChecker: typeChecker, childNodeParser: childNodeParser}
+func NewIntersectionNodeParser(childNodeParser NodeParser) *IntersectionNodeParser {
+	return &IntersectionNodeParser{childNodeParser: childNodeParser}
 }
 
 func (p *IntersectionNodeParser) SupportsNode(node *ast.Node) bool {

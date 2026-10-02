@@ -72,7 +72,6 @@ func (p *MappedTypeNodeParser) CreateType(node *ast.Node, context *Context, _ *t
 			return &types.AnnotatedType{
 				Type:        resultType,
 				Annotations: types.Annotations{"propertyNames": annotations},
-				Nullable:    false,
 			}
 		}
 		return resultType
@@ -184,13 +183,12 @@ func (p *MappedTypeNodeParser) getAdditionalProperties(node *ast.Node, keyListTy
 		}
 	}
 
-	if key != nil {
-		if t := p.childNodeParser.CreateType(node.AsMappedTypeNode().Type, p.createSubContext(node, key, context), nil); t != nil {
-			return t
-		}
+	if key == nil {
 		return p.additionalProperties
 	}
-
+	if t := p.childNodeParser.CreateType(node.AsMappedTypeNode().Type, p.createSubContext(node, key, context), nil); t != nil {
+		return t
+	}
 	return p.additionalProperties
 }
 

@@ -99,11 +99,11 @@ func (p *TypeReferenceNodeParser) CreateType(node *ast.Node, ctx *Context, _ *ty
 
 	switch typeSymbol.Name {
 	case "Date":
-		return &types.AnnotatedType{Type: &types.StringType{}, Annotations: types.Annotations{"format": "date-time"}, Nullable: false}
+		return &types.AnnotatedType{Type: &types.StringType{}, Annotations: types.Annotations{"format": "date-time"}}
 	case "RegExp":
-		return &types.AnnotatedType{Type: &types.StringType{}, Annotations: types.Annotations{"format": "regex"}, Nullable: false}
+		return &types.AnnotatedType{Type: &types.StringType{}, Annotations: types.Annotations{"format": "regex"}}
 	case "URL":
-		return &types.AnnotatedType{Type: &types.StringType{}, Annotations: types.Annotations{"format": "uri"}, Nullable: false}
+		return &types.AnnotatedType{Type: &types.StringType{}, Annotations: types.Annotations{"format": "uri"}}
 	}
 
 	return p.childNodeParser.CreateType(firstValidDeclaration(typeSymbol.Declarations), newTypeArgumentContext(p.childNodeParser, node, ctx), nil)
