@@ -16,13 +16,14 @@ import (
 	"unicode"
 
 	"github.com/vega/ts-json-schema-generator-go/internal/fixtures"
+	"github.com/vega/ts-json-schema-generator-go/tools/internal/reporoot"
 )
 
 var allowedImports = regexp.MustCompile(
 	`^import\s+(type\s+)?({[^}]*}|[\w$]+)\s+from\s+"(\.\./\.\./utils(\.js)?|node:test)";?$`)
 
 func main() {
-	root, err := repoRoot()
+	root, err := reporoot.Find()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
@@ -69,23 +70,6 @@ func main() {
 	}
 	fmt.Printf("wrote %s: %d entries, %d fixtures parsed, %d fixtures skipped\n",
 		outPath, len(manifest), parsed, skipped)
-}
-
-func repoRoot() (string, error) {
-	dir, err := os.Getwd()
-	if err != nil {
-		return "", err
-	}
-	for {
-		if info, err := os.Stat(filepath.Join(dir, "test", "valid-data")); err == nil && info.IsDir() {
-			return dir, nil
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			return "", fmt.Errorf("cannot locate repository root (test/valid-data) above the working directory")
-		}
-		dir = parent
-	}
 }
 
 // extractFixture parses one fixture directory into manifest entries. A
